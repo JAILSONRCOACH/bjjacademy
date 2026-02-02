@@ -74,6 +74,13 @@ export function Navbar() {
                     >
                         Preços
                     </a>
+                    <a
+                        href="#depoimentos"
+                        className="text-lg font-medium p-2 hover:bg-muted rounded-md"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                        Depoimentos
+                    </a>
                     <Link
                         to="/login"
                         className="text-lg font-medium p-2 hover:bg-muted rounded-md"
