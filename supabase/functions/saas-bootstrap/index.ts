@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -101,6 +102,33 @@ Deno.serve(async (req) => {
     if (subError) throw subError
     console.log('Subscription created')
 
+    // 5. Notify Super Admin (Jailson)
+    try {
+      const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+      if (RESEND_API_KEY) {
+        const resend = new Resend(RESEND_API_KEY);
+        await resend.emails.send({
+          from: "BJJ Academy System <system@academybjj.com.br>",
+          to: "jailsonrcoach@gmail.com",
+          subject: `🚀 Nova Academia Cadastrada: ${academyName}`,
+          html: `
+            <h1>Nova Academia no Sistema</h1>
+            <p><strong>Academia:</strong> ${academyName}</p>
+            <p><strong>Admin:</strong> ${adminName}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Data:</strong> ${new Date().toLocaleString()}</p>
+            <p><strong>Trial até:</strong> ${trialEnd.toLocaleDateString()}</p>
+            <hr>
+            <p>Este é um email automático do sistema.</p>
+          `
+        });
+        console.log('Admin notification sent');
+      }
+    } catch (emailError) {
+      console.error('Failed to send admin notification:', emailError);
+      // Don't fail the request, just log
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -124,3 +152,4 @@ Deno.serve(async (req) => {
     )
   }
 })
+

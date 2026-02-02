@@ -5,7 +5,8 @@ import { BeltBadge } from '@/components/students/BeltBadge';
 import { Award, TrendingUp, Eye } from 'lucide-react';
 import { EligibleStudent } from '@/hooks/useGraduation';
 import { Tables } from '@/integrations/supabase/types';
-import { BeltType, BELT_LABELS, ADULT_BELT_PROGRESSION } from '@/lib/beltSystem';
+import { BeltType, BELT_LABELS, getNextBelt } from '@/lib/beltSystem';
+import { differenceInYears } from 'date-fns';
 
 type Student = Tables<'students'>;
 
@@ -20,9 +21,9 @@ interface PromotionCardProps {
   onViewHistory: () => void;
 }
 
-export function PromotionCard({ 
-  student, 
-  type, 
+export function PromotionCard({
+  student,
+  type,
   targetBelt,
   targetStripe,
   classesInCycle,
@@ -34,8 +35,12 @@ export function PromotionCard({
   const stripes = 'stripes_cached' in student ? student.stripes_cached : 0;
   const cycleClasses = classesInCycle ?? ('belt_cycle_classes' in student ? student.belt_cycle_classes : 0);
   const total = totalClasses ?? ('total_classes' in student ? student.total_classes : 0);
-  
-  const nextBelt = targetBelt || ADULT_BELT_PROGRESSION[currentBelt] || currentBelt;
+
+  // Calculate student age to determine correct belt progression
+  const birthDate = 'birth_date' in student && student.birth_date ? new Date(student.birth_date) : null;
+  const studentAge = birthDate ? differenceInYears(new Date(), birthDate) : 18; // Default to adult if no birth date
+
+  const nextBelt = targetBelt || getNextBelt(currentBelt, studentAge) || currentBelt;
   const isBeltPromotion = type === 'belt' || stripes >= 4;
 
   return (
@@ -47,7 +52,7 @@ export function PromotionCard({
             <h3 className="font-bold text-lg truncate">{student.name}</h3>
             <p className="text-xs text-muted-foreground">ID: #{student.id.slice(0, 8)}</p>
           </div>
-          <Badge 
+          <Badge
             variant={isBeltPromotion ? "default" : "secondary"}
             className={isBeltPromotion ? "bg-primary text-primary-foreground" : ""}
           >
@@ -76,16 +81,16 @@ export function PromotionCard({
         </div>
 
         {/* Action Button */}
-        <Button 
-          className="w-full gap-2" 
+        <Button
+          className="w-full gap-2"
           onClick={onPromote}
           variant={isBeltPromotion ? "default" : "outline"}
         >
-        {isBeltPromotion ? (
-          <>
-            <Award className="h-4 w-4" />
-            Graduar para {BELT_LABELS[nextBelt as BeltType] || nextBelt}
-          </>
+          {isBeltPromotion ? (
+            <>
+              <Award className="h-4 w-4" />
+              Graduar para {BELT_LABELS[nextBelt as BeltType] || nextBelt}
+            </>
           ) : (
             <>
               <TrendingUp className="h-4 w-4" />

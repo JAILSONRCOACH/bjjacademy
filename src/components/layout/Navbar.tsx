@@ -29,6 +29,7 @@ export function Navbar() {
 
                 {/* Desktop Menu */}
                 <div className="hidden md:flex items-center gap-8">
+                    <a href="#contratos" className="text-foreground/80 hover:text-primary transition-colors font-medium">Contratos</a>
                     <a href="#funcionalidades" className="text-foreground/80 hover:text-primary transition-colors font-medium">Funcionalidades</a>
                     <a href="#precos" className="text-foreground/80 hover:text-primary transition-colors font-medium">Preços</a>
                     <a href="#depoimentos" className="text-foreground/80 hover:text-primary transition-colors font-medium">Depoimentos</a>
@@ -60,6 +61,13 @@ export function Navbar() {
             {/* Mobile Menu */}
             {isMobileMenuOpen && (
                 <div className="md:hidden absolute top-20 left-0 right-0 bg-background border-b shadow-lg p-4 flex flex-col gap-4 animate-in slide-in-from-top-4">
+                    <a
+                        href="#contratos"
+                        className="text-lg font-medium p-2 hover:bg-muted rounded-md"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                        Contratos
+                    </a>
                     <a
                         href="#funcionalidades"
                         className="text-lg font-medium p-2 hover:bg-muted rounded-md"

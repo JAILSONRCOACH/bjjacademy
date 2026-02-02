@@ -27,7 +27,11 @@ import {
     Bell,
     Award,
     Target,
-    Play
+    Play,
+    FileSignature,
+    Link2,
+    Smartphone,
+    PenTool
 } from "lucide-react";
 
 export default function Landing() {
@@ -68,12 +72,12 @@ export default function Landing() {
                                 Gestão 360 da sua academia
                             </span>
                             <br />
-                            <span className="text-primary">com Tatami Online em tempo real</span>
+                            <span className="text-primary">com Tatami Online e Assinatura Digital</span>
                         </h1>
 
                         {/* Sub-headline */}
                         <p className="text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                            Check-in com aprovação + visão ao vivo por faixa e turma + <strong>administrativo completo</strong>.
+                            Check-in com aprovação + visão ao vivo por faixa e turma + <strong>Financeiro e Contratos Digitais</strong>.
                             Professor faz chamada. Admin controla tudo. Aluno acompanha evolução no app.
                         </p>
 
@@ -236,7 +240,7 @@ export default function Landing() {
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 text-blue-500 text-sm font-medium mb-4">
                                 <DollarSign className="w-4 h-4" /> ADMINISTRATIVO COMPLETO
                             </div>
-                            <h2 className="text-3xl lg:text-5xl font-bold">Financeiro 360°</h2>
+                            <h2 className="text-3xl lg:text-5xl font-bold">Financeiro 360° & Relatórios</h2>
                             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
                                 Despesas fixas e variáveis, recebimentos, inadimplência e fluxo de caixa — tudo num só lugar.
                             </p>
@@ -273,6 +277,96 @@ export default function Landing() {
                                 title="Governança e Permissões"
                                 items={["Professor não vê financeiro", "Permissões por perfil", "Auditoria de ações"]}
                             />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* CONTRATOS DIGITAIS Section - NEW */}
+            <section id="contratos" className="py-24 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800">
+                <div className="container mx-auto px-4">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="grid lg:grid-cols-2 gap-16 items-center">
+                            <div className="space-y-8">
+                                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600/10 text-blue-600 text-sm font-medium">
+                                    <FileSignature className="w-4 h-4" /> ADEUS PAPELADA
+                                </div>
+                                <h2 className="text-3xl lg:text-5xl font-bold font-tight">
+                                    Contratos Automáticos & <span className="text-blue-600">Assinatura Digital</span>
+                                </h2>
+                                <p className="text-lg text-muted-foreground leading-relaxed">
+                                    Esqueça a impressora. O sistema gera o contrato com os dados do aluno automaticamente e envia um link seguro para assinatura.
+                                </p>
+
+                                <div className="space-y-6">
+                                    <div className="flex gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                                            <Zap className="w-6 h-6 text-blue-600" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-lg">Geração em 1 Clique</h4>
+                                            <p className="text-sm text-muted-foreground">O sistema puxa os dados do cadastro e cria o contrato em PDF na hora.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                                            <Smartphone className="w-6 h-6 text-green-600" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-lg">Assinatura via WhatsApp</h4>
+                                            <p className="text-sm text-muted-foreground">Envie o link. O aluno assina desenhando na tela do celular. Simples e com validade jurídica.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+                                            <ShieldCheck className="w-6 h-6 text-indigo-600" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-lg">Armazenamento Seguro</h4>
+                                            <p className="text-sm text-muted-foreground">Contratos assinados ficam salvos na nuvem. Nunca mais perca um documento.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4">
+                                    <a href="#demo">
+                                        <Button className="h-12 px-6 rounded-full shadow-lg shadow-blue-500/20">
+                                            Ver Demonstração
+                                        </Button>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div className="relative">
+                                {/* Visual Representation of Digital Contract */}
+                                <div className="relative z-10 bg-white dark:bg-slate-900 border rounded-2xl shadow-2xl p-2 max-w-sm mx-auto rotate-2 hover:rotate-0 transition-all duration-500">
+                                    <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-6 border border-slate-100 dark:border-slate-700">
+                                        <div className="flex justify-between items-center mb-6 opacity-50">
+                                            <div className="w-20 h-4 bg-slate-300 rounded" />
+                                            <div className="w-8 h-8 rounded-full bg-slate-300" />
+                                        </div>
+                                        <div className="space-y-3 mb-8">
+                                            <div className="h-2 bg-slate-200 rounded w-full" />
+                                            <div className="h-2 bg-slate-200 rounded w-full" />
+                                            <div className="h-2 bg-slate-200 rounded w-3/4" />
+                                            <div className="h-2 bg-slate-200 rounded w-full" />
+                                            <div className="h-2 bg-slate-200 rounded w-5/6" />
+                                        </div>
+
+                                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-100 dark:border-blue-800 text-center">
+                                            <p className="text-xs font-bold text-blue-600 mb-2">Assinado Digitalmente por</p>
+                                            <div className="h-8 mx-auto w-32 relative">
+                                                <div className="absolute inset-x-0 top-1/2 h-px bg-blue-200" />
+                                                <p className="font-script text-xl text-blue-800 relative z-10 -rotate-3">Carlos Silva</p>
+                                            </div>
+                                            <p className="text-[10px] text-muted-foreground mt-1">{new Date().toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* Decorative Blobs */}
+                                <div className="absolute top-10 right-10 w-32 h-32 bg-blue-500/30 rounded-full blur-3xl -z-10" />
+                                <div className="absolute bottom-10 left-10 w-32 h-32 bg-indigo-500/30 rounded-full blur-3xl -z-10" />
+                            </div>
                         </div>
                     </div>
                 </div>
