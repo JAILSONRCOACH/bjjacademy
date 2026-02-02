@@ -141,9 +141,11 @@ export default function Landing() {
                                 </blockquote>
 
                                 <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold text-xl">
-                                        JR
-                                    </div>
+                                    <img
+                                        src="/professor-joas.png"
+                                        alt="Professor Joás Ramos"
+                                        className="w-16 h-16 rounded-full object-cover border-2 border-primary/30"
+                                    />
                                     <div>
                                         <p className="font-bold text-lg">Professor Joás Ramos</p>
                                         <p className="text-muted-foreground">Faixa Preta 5º Grau • +33 anos de experiência</p>
