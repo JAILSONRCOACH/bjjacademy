@@ -9,11 +9,11 @@ interface SidebarLayoutProps {
 export function SidebarLayout({ children, title }: SidebarLayoutProps) {
   return (
     <div className="min-h-screen w-full bg-background">
-      <div className="flex">
-        <div className="scale-[1.05] origin-top-left">
+      <div className="flex flex-col lg:flex-row">
+        <div className="lg:scale-[1.05] origin-top-left">
           <AppSidebar />
         </div>
-        
+
         <main className="flex-1 min-w-0 overflow-auto">
           <div className="p-4 lg:p-8 max-w-7xl mx-auto">
             {title && (
