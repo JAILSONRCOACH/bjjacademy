@@ -295,7 +295,7 @@ export default function Landing() {
                                     Contratos Automáticos & <span className="text-blue-600">Assinatura Digital</span>
                                 </h2>
                                 <p className="text-lg text-muted-foreground leading-relaxed">
-                                    Esqueça a impressora. O sistema gera o contrato com os dados do aluno automaticamente e envia um link seguro para assinatura.
+                                    Esqueça a impressora. O sistema gera o contrato com os dados do aluno automaticamente e libera para assinatura no aplicativo.
                                 </p>
 
                                 <div className="space-y-6">
@@ -313,8 +313,8 @@ export default function Landing() {
                                             <Smartphone className="w-6 h-6 text-green-600" />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-lg">Assinatura via WhatsApp</h4>
-                                            <p className="text-sm text-muted-foreground">Envie o link. O aluno assina desenhando na tela do celular. Simples e com validade jurídica.</p>
+                                            <h4 className="font-bold text-lg">Assinatura pelo App</h4>
+                                            <p className="text-sm text-muted-foreground">O aluno acessa pelo aplicativo e assina desenhando na tela. Simples e com validade jurídica.</p>
                                         </div>
                                     </div>
                                     <div className="flex gap-4">
