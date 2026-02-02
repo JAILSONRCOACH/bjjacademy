@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Landing from "./pages/Landing";
 import PublicRegistration from "./pages/PublicRegistration";
 import ActivateAccount from "./pages/ActivateAccount";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -269,7 +270,7 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/" element={<Landing />} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
