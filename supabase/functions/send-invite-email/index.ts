@@ -2,45 +2,45 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 interface InviteRequest {
-    name: string;
-    email: string;
-    invite_url: string;
-    sender_name?: string;
-    academy_name?: string;
+  name: string;
+  email: string;
+  invite_url: string;
+  sender_name?: string;
+  academy_name?: string;
 }
 
 serve(async (req) => {
-    if (req.method === "OPTIONS") {
-        return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    if (!RESEND_API_KEY) {
+      throw new Error("Missing RESEND_API_KEY");
     }
 
-    try {
-        const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-        if (!RESEND_API_KEY) {
-            throw new Error("Missing RESEND_API_KEY");
-        }
+    const { name, email, invite_url, sender_name = "BJJ Academy", academy_name = "BJJ Academy" } = await req.json() as InviteRequest;
 
-        const { name, email, invite_url, sender_name = "BJJ Academy", academy_name = "BJJ Academy" } = await req.json() as InviteRequest;
+    if (!name || !email || !invite_url) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields: name, email, invite_url" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-        if (!name || !email || !invite_url) {
-            return new Response(
-                JSON.stringify({ error: "Missing required fields: name, email, invite_url" }),
-                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-        }
+    const resend = new Resend(RESEND_API_KEY);
 
-        const resend = new Resend(RESEND_API_KEY);
-
-        const { data, error } = await resend.emails.send({
-            from: "BJJ Academy <noreply@academybjj.com.br>",
-            to: email,
-            subject: `🥋 Convite para treinar na ${academy_name}`,
-            html: `
+    const { data, error } = await resend.emails.send({
+      from: "BJJ Academy <noreply@academybjj.com.br>",
+      to: email,
+      subject: `🥋 Convite para treinar na ${academy_name}`,
+      html: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -73,26 +73,27 @@ serve(async (req) => {
         </body>
         </html>
       `
-        });
+    });
 
-        if (error) {
-            console.error("Resend error:", error);
-            return new Response(
-                JSON.stringify({ error: error.message }),
-                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-        }
-
-        return new Response(
-            JSON.stringify({ success: true, id: data?.id }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-
-    } catch (error: any) {
-        console.error("Error sending invite:", error);
-        return new Response(
-            JSON.stringify({ error: error.message }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+    if (error) {
+      console.error("Resend error:", error);
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    return new Response(
+      JSON.stringify({ success: true, id: data?.id }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+
+  } catch (error) {
+    console.error("Error sending invite:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
 });
