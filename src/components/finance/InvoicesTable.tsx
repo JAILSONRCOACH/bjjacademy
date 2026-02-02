@@ -41,7 +41,7 @@ import { Check, X, Loader2, Search, MoreHorizontal, Pencil, Trash2 } from 'lucid
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MarkPaidModal } from './MarkPaidModal';
+import { ConfirmPaymentModal } from './ConfirmPaymentModal';
 import { EditInvoiceModal } from './EditInvoiceModal';
 
 const statusLabels: Record<string, string> = {
@@ -248,7 +248,7 @@ export function InvoicesTable() {
         </div>
       )}
 
-      <MarkPaidModal
+      <ConfirmPaymentModal
         invoice={selectedInvoice}
         onClose={() => setSelectedInvoice(null)}
       />
@@ -263,7 +263,7 @@ export function InvoicesTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir fatura?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir esta fatura de {deletingInvoice?.student?.name}? 
+              Tem certeza que deseja excluir esta fatura de {deletingInvoice?.student?.name}?
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>

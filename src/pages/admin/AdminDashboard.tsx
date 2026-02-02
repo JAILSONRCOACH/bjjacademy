@@ -1,10 +1,10 @@
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Users, 
-  UserCheck, 
-  DollarSign, 
-  TrendingDown, 
+import {
+  Users,
+  UserCheck,
+  DollarSign,
+  TrendingDown,
   Award,
   Calendar,
   AlertTriangle,
@@ -16,6 +16,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { FinancialDashboard } from '@/components/finance/FinancialDashboard';
+import { OverdueAlertsCard } from '@/components/finance/OverdueAlertsCard';
 
 interface DashboardStats {
   totalStudents: number;
@@ -31,7 +33,7 @@ interface DashboardStats {
 
 function useDashboardStats() {
   const { profile } = useAuth();
-  
+
   return useQuery({
     queryKey: ['admin-dashboard-stats', profile?.academy_id],
     queryFn: async (): Promise<DashboardStats> => {
@@ -43,23 +45,32 @@ function useDashboardStats() {
       const [
         studentsResult,
         professorsResult,
-        invoicesResult,
-        expensesResult,
+        monthlyInvoicesResult, // Renamed to emphasize it's for monthly stats
+        monthlyExpensesResult,
         promotionsResult,
         attendanceResult,
+        // New global queries
+        globalOpenInvoicesResult,
+        globalOverdueInvoicesResult
       ] = await Promise.all([
         supabase.from('students').select('id, status'),
         supabase.from('profiles').select('id').eq('role', 'professor'),
-        supabase.from('invoices').select('status, amount, paid_at').gte('due_date', startOfMonth),
-        supabase.from('expenses').select('amount, paid_at, due_date').gte('due_date', startOfMonth),
+        // Monthly financial data for Revenue/Expense cards
+        supabase.from('invoices').select('status, amount, paid_at').gte('paid_at', `${startOfMonth}T00:00:00`),
+        supabase.from('expenses').select('amount, paid_at').gte('paid_at', `${startOfMonth}T00:00:00`),
+
         supabase.from('promotion_queue').select('id').eq('status', 'open'),
         supabase.from('attendance').select('id').gte('checked_in_at', `${today}T00:00:00`),
+
+        // Global counts for "Abertas" and "Vencidas" cards
+        supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+        supabase.from('invoices').select('id', { count: 'exact', head: true }).in('status', ['overdue', 'open']).lt('due_date', today),
       ]);
 
       const students = studentsResult.data || [];
       const professors = professorsResult.data || [];
-      const invoices = invoicesResult.data || [];
-      const expenses = expensesResult.data || [];
+      const monthlyInvoicesData = monthlyInvoicesResult.data || [];
+      const monthlyExpensesData = monthlyExpensesResult.data || [];
       const promotions = promotionsResult.data || [];
       const attendance = attendanceResult.data || [];
 
@@ -68,14 +79,16 @@ function useDashboardStats() {
       const activeStudents = students.filter(s => s.status === 'active').length;
       const totalProfessors = professors.length;
 
-      const pendingInvoices = invoices.filter(i => i.status === 'open').length;
-      const overdueInvoices = invoices.filter(i => i.status === 'overdue').length;
-      const monthlyRevenue = invoices
+      // Use the global counts from the count queries
+      const pendingInvoices = globalOpenInvoicesResult.count || 0;
+      const overdueInvoices = globalOverdueInvoicesResult.count || 0;
+
+      const monthlyRevenue = monthlyInvoicesData
         .filter(i => i.status === 'paid')
         .reduce((sum, i) => sum + Number(i.amount), 0);
 
-      const monthlyExpenses = expenses
-        .filter(e => e.paid_at)
+      const monthlyExpenses = monthlyExpensesData
+        .filter(e => e.paid_at) // Redundant check if query filters by paid_at but good for safety
         .reduce((sum, e) => sum + Number(e.amount), 0);
 
       return {
@@ -94,17 +107,17 @@ function useDashboardStats() {
   });
 }
 
-function StatCard({ 
-  title, 
-  value, 
-  subtitle, 
-  icon: Icon, 
+function StatCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
   iconColor = 'text-muted-foreground',
-  href 
-}: { 
-  title: string; 
-  value: string | number; 
-  subtitle?: string; 
+  href
+}: {
+  title: string;
+  value: string | number;
+  subtitle?: string;
   icon: React.ElementType;
   iconColor?: string;
   href?: string;
@@ -149,6 +162,9 @@ export default function AdminDashboard() {
             Visão geral da sua academia
           </p>
         </div>
+
+        {/* Overdue Alerts - Always visible at top */}
+        <OverdueAlertsCard />
 
         {isLoading ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -237,6 +253,9 @@ export default function AdminDashboard() {
                 href="/admin/financeiro"
               />
             </div>
+
+            {/* Financial Dashboard with Filters and Chart */}
+            <FinancialDashboard />
 
             {/* Quick Actions */}
             <Card>

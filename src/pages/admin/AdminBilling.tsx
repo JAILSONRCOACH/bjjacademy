@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useInvoices, useCreatePaymentLink, useMarkInvoicePaid, Invoice } from '@/hooks/usePayments';
+import { useInvoices, useCreatePaymentLink, Invoice } from '@/hooks/usePayments';
 import { Loader2, Search, Link, Copy, CheckCircle, DollarSign, AlertTriangle, Ban, QrCode, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { ConfirmPaymentModal } from '@/components/finance/ConfirmPaymentModal';
 
 const statusLabels: Record<string, string> = {
   open: 'Em Aberto',
@@ -39,11 +40,10 @@ export default function AdminBilling() {
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
-  const [markPaidModal, setMarkPaidModal] = useState<{ open: boolean; invoiceId: string | null }>({
+  const [confirmPaymentModal, setConfirmPaymentModal] = useState<{ open: boolean; invoice: Invoice | null }>({
     open: false,
-    invoiceId: null,
+    invoice: null,
   });
-  const [paymentMethod, setPaymentMethod] = useState('pix');
   const [pixModal, setPixModal] = useState<{ open: boolean; invoice: Invoice | null }>({
     open: false,
     invoice: null,
@@ -51,7 +51,7 @@ export default function AdminBilling() {
 
   const { data: invoices, isLoading } = useInvoices({ status: statusFilter });
   const createPaymentLink = useCreatePaymentLink();
-  const markPaid = useMarkInvoicePaid();
+
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -114,25 +114,7 @@ export default function AdminBilling() {
     });
   };
 
-  const handleMarkPaid = async () => {
-    if (!markPaidModal.invoiceId) return;
 
-    try {
-      await markPaid.mutateAsync({ invoiceId: markPaidModal.invoiceId, method: paymentMethod });
-      toast({
-        title: 'Fatura marcada como paga!',
-        description: 'O status do aluno será atualizado automaticamente.',
-      });
-      setMarkPaidModal({ open: false, invoiceId: null });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Erro ao marcar como pago';
-      toast({
-        title: 'Erro',
-        description: message,
-        variant: 'destructive',
-      });
-    }
-  };
 
   const filteredInvoices = invoices?.filter((inv) => {
     if (!search) return true;
@@ -301,7 +283,7 @@ export default function AdminBilling() {
                                 )}
                                 <Button
                                   size="sm"
-                                  onClick={() => setMarkPaidModal({ open: true, invoiceId: invoice.id })}
+                                  onClick={() => setConfirmPaymentModal({ open: true, invoice })}
                                   title="Marcar Pago"
                                 >
                                   <CheckCircle className="h-4 w-4" />
@@ -320,43 +302,11 @@ export default function AdminBilling() {
         </Card>
       </div>
 
-      {/* Mark Paid Modal */}
-      <Dialog open={markPaidModal.open} onOpenChange={(open) => setMarkPaidModal({ open, invoiceId: open ? markPaidModal.invoiceId : null })}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar Pagamento</DialogTitle>
-            <DialogDescription>
-              Marque a fatura como paga manualmente. O status do aluno será atualizado automaticamente.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Método de Pagamento</Label>
-              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pix">PIX</SelectItem>
-                  <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                  <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                  <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
-                  <SelectItem value="transferencia">Transferência</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMarkPaidModal({ open: false, invoiceId: null })}>
-              Cancelar
-            </Button>
-            <Button onClick={handleMarkPaid} disabled={markPaid.isPending}>
-              {markPaid.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Confirmar Pagamento
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Confirm Payment Modal */}
+      <ConfirmPaymentModal
+        invoice={confirmPaymentModal.invoice}
+        onClose={() => setConfirmPaymentModal({ open: false, invoice: null })}
+      />
 
       {/* PIX Modal */}
       <Dialog open={pixModal.open} onOpenChange={(open) => setPixModal({ open, invoice: open ? pixModal.invoice : null })}>
@@ -370,13 +320,13 @@ export default function AdminBilling() {
           <div className="space-y-4 py-4">
             {pixModal.invoice?.pix_qr_base64 && (
               <div className="flex flex-col items-center gap-4">
-                <img 
-                  src={`data:image/png;base64,${pixModal.invoice.pix_qr_base64}`} 
-                  alt="QR Code PIX" 
+                <img
+                  src={`data:image/png;base64,${pixModal.invoice.pix_qr_base64}`}
+                  alt="QR Code PIX"
                   className="w-48 h-48 border rounded-lg"
                 />
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => handleDownloadQR(pixModal.invoice!.pix_qr_base64!, pixModal.invoice!.id)}
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -388,13 +338,13 @@ export default function AdminBilling() {
               <div className="space-y-2">
                 <Label>PIX Copia e Cola</Label>
                 <div className="flex gap-2">
-                  <Input 
-                    value={pixModal.invoice.pix_copiaecola} 
-                    readOnly 
+                  <Input
+                    value={pixModal.invoice.pix_copiaecola}
+                    readOnly
                     className="text-xs font-mono"
                   />
-                  <Button 
-                    size="icon" 
+                  <Button
+                    size="icon"
                     variant="outline"
                     onClick={() => handleCopyPix(pixModal.invoice!.pix_copiaecola!)}
                   >
@@ -407,13 +357,13 @@ export default function AdminBilling() {
               <div className="space-y-2">
                 <Label>Link de Pagamento</Label>
                 <div className="flex gap-2">
-                  <Input 
-                    value={pixModal.invoice.checkout_url} 
-                    readOnly 
+                  <Input
+                    value={pixModal.invoice.checkout_url}
+                    readOnly
                     className="text-xs"
                   />
-                  <Button 
-                    size="icon" 
+                  <Button
+                    size="icon"
                     variant="outline"
                     onClick={() => handleCopyLink(pixModal.invoice!.checkout_url!)}
                   >

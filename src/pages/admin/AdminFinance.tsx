@@ -8,10 +8,11 @@ import { ExpenseMonthSelector } from '@/components/finance/ExpenseMonthSelector'
 import { useEnsureRecurringExpensesForMonth } from '@/hooks/useRecurringExpenses';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DollarSign, TrendingDown } from 'lucide-react';
+import { FinancialSummary } from '@/components/finance/FinancialSummary';
 
 export default function AdminFinance() {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  
+
   useEnsureRecurringExpensesForMonth({
     month: selectedDate.getMonth(),
     year: selectedDate.getFullYear(),
@@ -26,6 +27,9 @@ export default function AdminFinance() {
             Gerencie receitas e despesas da academia
           </p>
         </div>
+
+
+        <FinancialSummary />
 
         <Tabs defaultValue="receitas" className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-2">
@@ -46,18 +50,18 @@ export default function AdminFinance() {
 
           <TabsContent value="despesas" className="space-y-6">
             <div className="flex justify-end">
-              <ExpenseMonthSelector 
-                selectedDate={selectedDate} 
-                onDateChange={setSelectedDate} 
+              <ExpenseMonthSelector
+                selectedDate={selectedDate}
+                onDateChange={setSelectedDate}
               />
             </div>
-            <ExpenseStats 
-              month={selectedDate.getMonth()} 
-              year={selectedDate.getFullYear()} 
+            <ExpenseStats
+              month={selectedDate.getMonth()}
+              year={selectedDate.getFullYear()}
             />
-            <ExpensesTable 
-              month={selectedDate.getMonth()} 
-              year={selectedDate.getFullYear()} 
+            <ExpensesTable
+              month={selectedDate.getMonth()}
+              year={selectedDate.getFullYear()}
             />
           </TabsContent>
         </Tabs>

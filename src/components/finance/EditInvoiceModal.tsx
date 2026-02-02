@@ -36,6 +36,8 @@ export function EditInvoiceModal({ invoice, onClose }: EditInvoiceModalProps) {
     amount: 0,
     status: 'open' as 'open' | 'paid' | 'overdue' | 'canceled',
     notes: '',
+    paid_at: '',
+    payment_method: '',
   });
 
   useEffect(() => {
@@ -45,6 +47,8 @@ export function EditInvoiceModal({ invoice, onClose }: EditInvoiceModalProps) {
         amount: invoice.amount,
         status: invoice.status,
         notes: invoice.notes || '',
+        paid_at: invoice.paid_at ? invoice.paid_at.split('T')[0] : new Date().toISOString().split('T')[0],
+        payment_method: invoice.payment_method || '',
       });
     }
   }, [invoice]);
@@ -60,6 +64,8 @@ export function EditInvoiceModal({ invoice, onClose }: EditInvoiceModalProps) {
           amount: data.amount,
           status: data.status,
           notes: data.notes || null,
+          paid_at: data.status === 'paid' ? new Date(data.paid_at).toISOString() : null,
+          payment_method: data.status === 'paid' ? data.payment_method : null,
         })
         .eq('id', invoice.id);
 
@@ -145,6 +151,41 @@ export function EditInvoiceModal({ invoice, onClose }: EditInvoiceModalProps) {
               </SelectContent>
             </Select>
           </div>
+
+          {formData.status === 'paid' && (
+            <div className="grid grid-cols-2 gap-4 bg-muted/50 p-3 rounded-lg border">
+              <div className="space-y-2">
+                <Label htmlFor="paid_at">Data Pagamento *</Label>
+                <Input
+                  id="paid_at"
+                  type="date"
+                  value={formData.paid_at}
+                  onChange={(e) => setFormData({ ...formData, paid_at: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="payment_method">Forma Pagto *</Label>
+                <Select
+                  value={formData.payment_method}
+                  onValueChange={(value) => setFormData({ ...formData, payment_method: value })}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dinheiro">Dinheiro 💵</SelectItem>
+                    <SelectItem value="pix">Pix (Manual) 💠</SelectItem>
+                    <SelectItem value="cartao_credito">Cartão de Crédito 💳</SelectItem>
+                    <SelectItem value="cartao_debito">Cartão de Débito 💳</SelectItem>
+                    <SelectItem value="transferencia">Transferência Bancária 🏦</SelectItem>
+                    <SelectItem value="boleto">Boleto (Externo) 📄</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="notes">Observações</Label>
