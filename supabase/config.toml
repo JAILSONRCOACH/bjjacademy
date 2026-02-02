@@ -1,0 +1,19 @@
+project_id = "tllwwcgvhrrfhfzbgxnx"
+
+[functions.n8n-webhook]
+verify_jwt = false
+
+[functions.create-professor]
+verify_jwt = false
+
+[functions.public-registration]
+verify_jwt = false
+
+[functions.mp-create-payment]
+verify_jwt = true
+
+[functions.mp-webhook]
+verify_jwt = false
+
+[functions.suspend-overdue]
+verify_jwt = false
