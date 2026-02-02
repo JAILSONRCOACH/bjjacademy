@@ -12,7 +12,22 @@ import {
     Star,
     Instagram,
     Mail,
-    MessageCircle
+    MessageCircle,
+    Zap,
+    Eye,
+    Clock,
+    DollarSign,
+    FileText,
+    AlertTriangle,
+    Lock,
+    Activity,
+    UserCheck,
+    Filter,
+    BarChart3,
+    Bell,
+    Award,
+    Target,
+    Play
 } from "lucide-react";
 
 export default function Landing() {
@@ -22,92 +37,321 @@ export default function Landing() {
         <div className="min-h-screen bg-background font-sans selection:bg-primary/20">
             <Navbar />
 
-            {/* Hero Section */}
-            <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-                <div className="container mx-auto px-4 relative z-10">
-                    <div className="max-w-4xl mx-auto text-center space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-
-                        {/* Logo Destaque */}
-                        <div className="flex justify-center mb-6">
-                            <img
-                                src="/logo.jpg"
-                                alt="BJJ Academy Pro"
-                                className="w-32 h-32 lg:w-40 lg:h-40 rounded-full object-cover shadow-2xl border-4 border-primary/20"
-                            />
-                        </div>
-
-                        <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/60 leading-[1.1]">
-                            Gestão. <br />
-                            <span className="text-primary">Nível Faixa Preta.</span>
-                        </h1>
-                        <p className="text-xl lg:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                            O único SaaS feito especialmente para academias de Jiu-Jitsu. Controle financeiro, graduação de alunos e gestão de presença em um só lugar.
-                        </p>
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-                            <Link to="/signup">
-                                <Button size="lg" className="h-14 px-8 text-lg font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all">
-                                    Comece 7 Dias Grátis
-                                </Button>
-                            </Link>
-                            <Link to="/login">
-                                <Button variant="outline" size="lg" className="h-14 px-8 text-lg hover:bg-muted/50">
-                                    Acessar Minha Conta
-                                </Button>
-                            </Link>
-                        </div>
-                        <p className="text-sm text-muted-foreground pt-4">
-                            <CheckCircle2 className="inline-block w-4 h-4 mr-1 text-primary" /> Sem cartão de crédito para começar
-                        </p>
-                    </div>
+            {/* Hero Section - Redesigned */}
+            <section className="relative pt-32 pb-20 lg:pt-44 lg:pb-28 overflow-hidden">
+                {/* Animated Background */}
+                <div className="absolute inset-0 overflow-hidden">
+                    <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
+                    <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[100px] animate-pulse delay-1000" />
                 </div>
 
-                {/* Background Decorative Elements */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-[1200px] pointer-events-none opacity-40">
-                    <div className="absolute top-[20%] left-[10%] w-72 h-72 bg-primary/20 rounded-full blur-[100px]" />
-                    <div className="absolute bottom-[20%] right-[10%] w-96 h-96 bg-blue-600/10 rounded-full blur-[100px]" />
+                <div className="container mx-auto px-4 relative z-10">
+                    <div className="max-w-5xl mx-auto text-center space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+
+                        {/* Logo */}
+                        <div className="flex justify-center mb-8">
+                            <div className="relative">
+                                <img
+                                    src="/logo.jpg"
+                                    alt="BJJ Academy Pro"
+                                    className="w-28 h-28 lg:w-36 lg:h-36 rounded-full object-cover shadow-2xl border-4 border-primary/30"
+                                />
+                                <div className="absolute -bottom-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                                    <Activity className="w-3 h-3" /> AO VIVO
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Main Headline */}
+                        <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.1]">
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground to-foreground/70">
+                                Gestão 360 da sua academia
+                            </span>
+                            <br />
+                            <span className="text-primary">com Tatami Online em tempo real</span>
+                        </h1>
+
+                        {/* Sub-headline */}
+                        <p className="text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+                            Check-in com aprovação + visão ao vivo por faixa e turma + <strong>administrativo completo</strong>.
+                            Professor faz chamada. Admin controla tudo. Aluno acompanha evolução no app.
+                        </p>
+
+                        {/* CTA Buttons */}
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
+                            <a href="#demo">
+                                <Button size="lg" className="h-14 px-8 text-lg font-bold shadow-xl shadow-primary/25 hover:scale-105 transition-all group">
+                                    <Play className="w-5 h-5 mr-2 group-hover:animate-pulse" />
+                                    Ver Demonstração do Tatami
+                                </Button>
+                            </a>
+                            <Link to="/signup">
+                                <Button variant="outline" size="lg" className="h-14 px-8 text-lg hover:bg-muted/50">
+                                    Começar 7 Dias Grátis
+                                </Button>
+                            </Link>
+                        </div>
+
+                        <p className="text-sm text-muted-foreground pt-2">
+                            <CheckCircle2 className="inline-block w-4 h-4 mr-1 text-green-500" /> Sem cartão de crédito para começar
+                        </p>
+                    </div>
                 </div>
             </section>
 
-            {/* Features Grid */}
+            {/* Social Proof Bar */}
+            <section className="py-6 border-y bg-muted/30">
+                <div className="container mx-auto px-4">
+                    <div className="flex flex-wrap justify-center items-center gap-8 text-muted-foreground text-sm">
+                        <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-5 h-5 text-green-500" />
+                            <span>+100 Academias</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-5 h-5 text-green-500" />
+                            <span>+5.000 Alunos Gerenciados</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-5 h-5 text-green-500" />
+                            <span>Nota 5.0 ⭐</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* TATAMI ONLINE Section - NEW */}
+            <section id="tatami" className="py-24 bg-gradient-to-b from-background to-muted/20">
+                <div className="container mx-auto px-4">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="text-center mb-16 space-y-4">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 text-green-500 text-sm font-medium mb-4">
+                                <Activity className="w-4 h-4" /> EXCLUSIVO
+                            </div>
+                            <h2 className="text-3xl lg:text-5xl font-bold">Tatami Online em Tempo Real</h2>
+                            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                                Quando o aluno faz check-in, o nome aparece <strong>na hora</strong> para aprovação do professor e do administrador.
+                            </p>
+                        </div>
+
+                        <div className="grid lg:grid-cols-2 gap-12 items-center">
+                            {/* Demo Visual - Mock */}
+                            <div id="demo" className="relative">
+                                <div className="bg-card border rounded-2xl p-6 shadow-2xl">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="font-bold text-lg flex items-center gap-2">
+                                            <Activity className="w-5 h-5 text-green-500" /> Tatami Online
+                                        </h3>
+                                        <span className="text-sm text-muted-foreground">Sexta, 14:30</span>
+                                    </div>
+
+                                    {/* Live Stats */}
+                                    <div className="grid grid-cols-3 gap-4 mb-6">
+                                        <div className="bg-muted/50 rounded-xl p-4 text-center">
+                                            <p className="text-3xl font-bold text-primary">18</p>
+                                            <p className="text-xs text-muted-foreground">Treinando Agora</p>
+                                        </div>
+                                        <div className="bg-muted/50 rounded-xl p-4 text-center">
+                                            <p className="text-3xl font-bold text-blue-500">14</p>
+                                            <p className="text-xs text-muted-foreground">Masculino</p>
+                                        </div>
+                                        <div className="bg-muted/50 rounded-xl p-4 text-center">
+                                            <p className="text-3xl font-bold text-pink-500">4</p>
+                                            <p className="text-xs text-muted-foreground">Feminino</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Simulated List */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">AZ</div>
+                                                <div>
+                                                    <p className="font-medium text-sm">Carlos Silva</p>
+                                                    <p className="text-xs text-muted-foreground">Faixa Azul • 2 graus</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">✓ Aprovado</span>
+                                        </div>
+                                        <div className="flex items-center justify-between p-3 bg-amber-500/10 rounded-lg border border-amber-500/20 animate-pulse">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-gray-600 text-xs font-bold">BR</div>
+                                                <div>
+                                                    <p className="font-medium text-sm">Ana Rodrigues</p>
+                                                    <p className="text-xs text-muted-foreground">Faixa Branca • 3 graus</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs bg-amber-500 text-white px-2 py-1 rounded-full">⏳ Pendente</span>
+                                        </div>
+                                        <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold">RX</div>
+                                                <div>
+                                                    <p className="font-medium text-sm">Pedro Santos</p>
+                                                    <p className="text-xs text-muted-foreground">Faixa Roxa • 1 grau</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">✓ Aprovado</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Decorative elements */}
+                                <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl" />
+                                <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-green-500/20 rounded-full blur-2xl" />
+                            </div>
+
+                            {/* Features List */}
+                            <div className="space-y-6">
+                                <FeatureItem
+                                    icon={<UserCheck className="w-6 h-6 text-green-500" />}
+                                    title="Check-in com Aprovação"
+                                    description="Professor ou admin aprova a entrada do aluno em tempo real. Sem fraudes."
+                                />
+                                <FeatureItem
+                                    icon={<Eye className="w-6 h-6 text-blue-500" />}
+                                    title="Lista ao Vivo por Faixa e Status"
+                                    description="Veja quem está treinando agora, filtrado por faixa, sexo, turma e professor."
+                                />
+                                <FeatureItem
+                                    icon={<Building2 className="w-6 h-6 text-purple-500" />}
+                                    title="Visão por Unidade (Multi-Academia)"
+                                    description="Se você tem mais de uma academia, veja a ocupação de cada tatame separadamente."
+                                />
+                                <FeatureItem
+                                    icon={<Clock className="w-6 h-6 text-amber-500" />}
+                                    title="Histórico e Auditoria de Presença"
+                                    description="Saiba quem aprovou cada check-in e quando. Transparência total."
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* FINANCEIRO 360 Section - NEW */}
+            <section id="financeiro" className="py-24 bg-muted/30">
+                <div className="container mx-auto px-4">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="text-center mb-16 space-y-4">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 text-blue-500 text-sm font-medium mb-4">
+                                <DollarSign className="w-4 h-4" /> ADMINISTRATIVO COMPLETO
+                            </div>
+                            <h2 className="text-3xl lg:text-5xl font-bold">Financeiro 360°</h2>
+                            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                                Despesas fixas e variáveis, recebimentos, inadimplência e fluxo de caixa — tudo num só lugar.
+                            </p>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <FinanceCard
+                                icon={<TrendingUp className="w-8 h-8 text-green-500" />}
+                                title="Contas a Receber"
+                                items={["Mensalidades automáticas", "Planos e recorrência", "Pendências em destaque"]}
+                            />
+                            <FinanceCard
+                                icon={<FileText className="w-8 h-8 text-red-500" />}
+                                title="Contas a Pagar"
+                                items={["Despesas fixas e variáveis", "Vencimentos e alertas", "Fornecedores cadastrados"]}
+                            />
+                            <FinanceCard
+                                icon={<BarChart3 className="w-8 h-8 text-blue-500" />}
+                                title="Caixa e Fluxo"
+                                items={["Entradas e saídas do mês", "Projeção de fluxo", "Alertas de saldo baixo"]}
+                            />
+                            <FinanceCard
+                                icon={<FileText className="w-8 h-8 text-purple-500" />}
+                                title="Relatórios Completos"
+                                items={["Por categoria e período", "Por unidade e professor", "Exportação em Excel/PDF"]}
+                            />
+                            <FinanceCard
+                                icon={<AlertTriangle className="w-8 h-8 text-amber-500" />}
+                                title="Gestão de Inadimplência"
+                                items={["Quem atrasou e há quantos dias", "Régua de cobrança automática", "Suspensão automática"]}
+                            />
+                            <FinanceCard
+                                icon={<Lock className="w-8 h-8 text-slate-500" />}
+                                title="Governança e Permissões"
+                                items={["Professor não vê financeiro", "Permissões por perfil", "Auditoria de ações"]}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* GRADUAÇÃO AUTOMÁTICA Section - NEW */}
+            <section id="graduacao" className="py-24 bg-background">
+                <div className="container mx-auto px-4">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="text-center mb-16 space-y-4">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 text-amber-500 text-sm font-medium mb-4">
+                                <Trophy className="w-4 h-4" /> AUTOMAÇÃO DE VERDADE
+                            </div>
+                            <h2 className="text-3xl lg:text-5xl font-bold">Graduação Automática</h2>
+                            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                                Defina suas regras. O sistema sinaliza automaticamente quem está pronto para grau ou faixa.
+                            </p>
+                        </div>
+
+                        <div className="grid lg:grid-cols-3 gap-8">
+                            <div className="bg-card border rounded-2xl p-8 hover:border-amber-500/50 transition-all hover:shadow-xl group">
+                                <div className="w-14 h-14 rounded-xl bg-amber-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                    <Target className="w-8 h-8 text-amber-500" />
+                                </div>
+                                <h3 className="text-xl font-bold mb-3">Regras por Turma/Faixa</h3>
+                                <p className="text-muted-foreground leading-relaxed">
+                                    Configure mínimo de treinos, tempo mínimo na faixa, presença obrigatória. Cada faixa pode ter suas próprias regras.
+                                </p>
+                            </div>
+
+                            <div className="bg-card border rounded-2xl p-8 hover:border-green-500/50 transition-all hover:shadow-xl group">
+                                <div className="w-14 h-14 rounded-xl bg-green-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                    <Bell className="w-8 h-8 text-green-500" />
+                                </div>
+                                <h3 className="text-xl font-bold mb-3">Sinalização Automática</h3>
+                                <p className="text-muted-foreground leading-relaxed">
+                                    "Pronto para grau", "Pronto para faixa", "Em atenção" — o sistema avisa você quando o aluno atinge os critérios.
+                                </p>
+                            </div>
+
+                            <div className="bg-card border rounded-2xl p-8 hover:border-blue-500/50 transition-all hover:shadow-xl group">
+                                <div className="w-14 h-14 rounded-xl bg-blue-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                    <Award className="w-8 h-8 text-blue-500" />
+                                </div>
+                                <h3 className="text-xl font-bold mb-3">Linha do Tempo do Aluno</h3>
+                                <p className="text-muted-foreground leading-relaxed">
+                                    Histórico completo: graus, faixas, datas, frequência mensal. O aluno também vê no app dele.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* More Features Grid */}
             <section id="funcionalidades" className="py-20 bg-muted/30">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-16 space-y-4">
-                        <h2 className="text-3xl lg:text-4xl font-bold">Tudo que você precisa para escalar</h2>
+                        <h2 className="text-3xl lg:text-4xl font-bold">E muito mais...</h2>
                         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                            Pare de usar planilhas. Automatize as operações da sua academia e foque no tatame.
+                            Tudo que você precisa para parar de usar planilhas e focar no tatame.
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                         <FeatureCard
                             icon={<ShieldCheck className="w-10 h-10 text-primary" />}
                             title="Isolamento Total"
-                            description="Seus dados são só seus. Nossa arquitetura multi-tenant garante 100% de privacidade e segurança para sua academia."
-                        />
-                        <FeatureCard
-                            icon={<TrendingUp className="w-10 h-10 text-blue-500" />}
-                            title="Crescimento Financeiro"
-                            description="Acompanhe mensalidades, despesas e faturas automaticamente. Saiba exatamente quem pagou e quem está pendente."
-                        />
-                        <FeatureCard
-                            icon={<Trophy className="w-10 h-10 text-amber-500" />}
-                            title="Graduação Automática"
-                            description="Defina suas regras. O sistema rastreia presenças e avisa quando o aluno está pronto para grau ou faixa."
+                            description="Seus dados são só seus. Arquitetura multi-tenant com 100% de privacidade."
                         />
                         <FeatureCard
                             icon={<Users className="w-10 h-10 text-violet-500" />}
                             title="Portal do Aluno"
-                            description="Dê aos seus alunos um app dedicado para ver progresso, histórico de presenças e status de pagamento."
-                        />
-                        <FeatureCard
-                            icon={<Calendar className="w-10 h-10 text-green-500" />}
-                            title="Gestão de Aulas"
-                            description="Agende aulas, registre check-ins via QR Code e gerencie capacidade sem esforço."
+                            description="App dedicado para o aluno ver progresso, presenças e status de pagamento."
                         />
                         <FeatureCard
                             icon={<Building2 className="w-10 h-10 text-rose-500" />}
                             title="Multi-Instrutor"
-                            description="Dê acesso específico aos seus professores para fazer chamada sem expor dados financeiros."
+                            description="Professores fazem chamada e graduação sem acesso ao financeiro."
                         />
                     </div>
                 </div>
@@ -125,11 +369,9 @@ export default function Landing() {
 
                     <div className="max-w-3xl mx-auto">
                         <div className="bg-card border rounded-2xl p-8 lg:p-10 relative overflow-hidden">
-                            {/* Quote marks */}
                             <div className="absolute top-4 left-6 text-8xl text-primary/10 font-serif leading-none">"</div>
 
                             <div className="relative z-10">
-                                {/* Stars */}
                                 <div className="flex gap-1 mb-6">
                                     {[...Array(5)].map((_, i) => (
                                         <Star key={i} className="w-6 h-6 fill-amber-400 text-amber-400" />
@@ -187,15 +429,15 @@ export default function Landing() {
                         <ul className="text-left max-w-xs mx-auto space-y-4 mb-10">
                             <li className="flex items-center gap-3">
                                 <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                <span>Alunos Ilimitados</span>
+                                <span>Tatami Online em tempo real</span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                <span>Aulas Ilimitadas</span>
+                                <span>Financeiro 360° completo</span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                <span>Módulo Financeiro Completo</span>
+                                <span>Graduação automática</span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
@@ -203,11 +445,19 @@ export default function Landing() {
                             </li>
                         </ul>
 
-                        <Link to="/signup" className="block w-full">
-                            <Button size="lg" className="w-full h-14 text-lg font-bold shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-all">
-                                Criar Minha Conta Agora
-                            </Button>
-                        </Link>
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <a href="#demo">
+                                <Button variant="outline" size="lg" className="h-14 px-8 text-lg">
+                                    <Play className="w-5 h-5 mr-2" />
+                                    Ver Demonstração
+                                </Button>
+                            </a>
+                            <Link to="/signup">
+                                <Button size="lg" className="h-14 px-8 text-lg font-bold shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-all">
+                                    Criar Minha Conta Agora
+                                </Button>
+                            </Link>
+                        </div>
                         <p className="mt-4 text-sm text-muted-foreground">
                             Cancele a qualquer momento pelo painel
                         </p>
@@ -221,12 +471,11 @@ export default function Landing() {
                     <div className="text-center mb-12 space-y-4">
                         <h2 className="text-3xl lg:text-4xl font-bold">Fale Conosco</h2>
                         <p className="text-muted-foreground text-lg">
-                            Tire suas dúvidas ou peça uma demonstração.
+                            Tire suas dúvidas ou peça uma demonstração personalizada.
                         </p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-                        {/* WhatsApp */}
                         <a
                             href={whatsappLink}
                             target="_blank"
@@ -242,7 +491,6 @@ export default function Landing() {
                             </div>
                         </a>
 
-                        {/* Email Contato */}
                         <a
                             href="mailto:contato@academybjj.com.br"
                             className="flex flex-col items-center gap-4 p-6 bg-background rounded-xl border hover:border-primary/50 hover:shadow-lg transition-all group"
@@ -256,7 +504,6 @@ export default function Landing() {
                             </div>
                         </a>
 
-                        {/* Email Suporte */}
                         <a
                             href="mailto:suporte@academybjj.com.br"
                             className="flex flex-col items-center gap-4 p-6 bg-background rounded-xl border hover:border-blue-500/50 hover:shadow-lg transition-all group"
@@ -281,9 +528,10 @@ export default function Landing() {
                         <span className="font-bold text-foreground">BJJ Academy Pro</span>
                     </div>
                     <div className="flex flex-wrap justify-center gap-6 mb-8">
-                        <a href="#funcionalidades" className="hover:text-foreground">Funcionalidades</a>
+                        <a href="#tatami" className="hover:text-foreground">Tatami Online</a>
+                        <a href="#financeiro" className="hover:text-foreground">Financeiro 360</a>
+                        <a href="#graduacao" className="hover:text-foreground">Graduação</a>
                         <a href="#depoimentos" className="hover:text-foreground">Depoimentos</a>
-                        <a href="#precos" className="hover:text-foreground">Preços</a>
                         <a href="#contato" className="hover:text-foreground">Contato</a>
                         <Link to="/login" className="hover:text-foreground">Entrar</Link>
                     </div>
@@ -309,9 +557,40 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode, titl
                 {icon}
             </div>
             <h3 className="text-xl font-bold mb-3">{title}</h3>
-            <p className="text-muted-foreground leading-relaxed">
-                {description}
-            </p>
+            <p className="text-muted-foreground leading-relaxed">{description}</p>
+        </div>
+    );
+}
+
+function FeatureItem({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
+    return (
+        <div className="flex gap-4 items-start">
+            <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                {icon}
+            </div>
+            <div>
+                <h4 className="font-bold text-lg mb-1">{title}</h4>
+                <p className="text-muted-foreground">{description}</p>
+            </div>
+        </div>
+    );
+}
+
+function FinanceCard({ icon, title, items }: { icon: React.ReactNode, title: string, items: string[] }) {
+    return (
+        <div className="p-6 bg-background rounded-xl border hover:border-blue-500/30 transition-all hover:shadow-lg group">
+            <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                {icon}
+            </div>
+            <h3 className="text-lg font-bold mb-4">{title}</h3>
+            <ul className="space-y-2">
+                {items.map((item, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                        {item}
+                    </li>
+                ))}
+            </ul>
         </div>
     );
 }
