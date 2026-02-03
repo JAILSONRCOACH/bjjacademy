@@ -119,6 +119,7 @@ export function AppSidebar() {
         {
           title: 'Configurações',
           items: [
+            { href: '/admin/onboarding', label: 'Configuração Inicial', icon: Radio }, // Using Radio as a placeholder or maybe another icon like Play/Settings
             { href: '/admin/academia', label: 'Minha Academia', icon: Building2 },
           ],
         },

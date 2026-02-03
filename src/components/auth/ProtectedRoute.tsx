@@ -73,8 +73,7 @@ export function ProtectedRoute({ children, allowedRoles, requireSuperAdmin }: Pr
     }
   }
 
-  // Block suspended students from accessing certain pages
-  // Only allow access to /aluno/mensalidade when suspended
+  // Block suspended students
   if (activeRole === 'student' && !loadingStudentData) {
     const isSuspended = studentData?.student?.status === 'suspended';
     const isOnBillingPage = location.pathname === '/aluno/mensalidade';
@@ -83,6 +82,21 @@ export function ProtectedRoute({ children, allowedRoles, requireSuperAdmin }: Pr
       return <Navigate to="/aluno/mensalidade" replace />;
     }
   }
+
+  // MANDATORY ONBOARDING GUARD (Admin Only)
+  // Forces admin to complete academy registration
+  // MANDATORY ONBOARDING GUARD (Admin Only)
+  if (activeRole === 'admin' && profile?.academy_id) {
+    const isOnboarding = location.pathname.includes('/admin/onboarding');
+
+    // If onboarding is NOT completed, redirect to wizard
+    if (profile.onboarding_completed === false && !isOnboarding) {
+      return <Navigate to="/admin/onboarding" replace />;
+    }
+  }
+  // but the user requirement is strict.
+
+  // PLAN B: Fetch only once?
 
   return <>{children}</>;
 }

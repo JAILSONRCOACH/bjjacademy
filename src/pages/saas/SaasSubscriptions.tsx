@@ -47,7 +47,7 @@ export default function SaasSubscriptions() {
             const enriched = await Promise.all(subs.map(async (sub: any) => {
                 const { data: admins } = await supabase
                     .from('profiles')
-                    .select('name, email, cpf, phone')
+                    .select('name, email, cpf, phone, address_street, address_number, address_neighborhood, address_city, address_state')
                     .eq('academy_id', sub.academy_id)
                     .eq('role', 'admin')
                     .limit(1);
@@ -57,6 +57,10 @@ export default function SaasSubscriptions() {
                     admin_name: admins?.[0]?.name || 'N/A',
                     admin_email: admins?.[0]?.email || 'N/A',
                     admin_phone: admins?.[0]?.phone || 'N/A',
+                    admin_cpf: admins?.[0]?.cpf || 'N/A',
+                    admin_address: admins?.[0]?.address_street ?
+                        `${admins[0].address_street}, ${admins[0].address_number || ''} - ${admins[0].address_neighborhood || ''}, ${admins[0].address_city || ''}/${admins[0].address_state || ''}`
+                        : 'Endereço não inf.'
                 };
             }));
 
@@ -157,12 +161,14 @@ export default function SaasSubscriptions() {
                                                     <div className="text-xs text-muted-foreground">ID: {sub.academy_id.slice(0, 8)}...</div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div>{sub.admin_name}</div>
                                                     <div className="text-xs text-muted-foreground">{sub.admin_email}</div>
-                                                    <div className="text-xs text-muted-foreground">{sub.cpf || 'CPF não inf.'}</div>
+                                                    <div className="text-xs text-muted-foreground">{sub.admin_cpf || 'CPF não inf.'}</div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="text-sm">{sub.admin_phone}</div>
+                                                    <div className="text-xs text-muted-foreground max-w-[150px] truncate" title={sub.admin_address}>
+                                                        {sub.admin_address}
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     {getStatusBadge(sub.status)}

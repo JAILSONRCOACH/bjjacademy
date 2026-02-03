@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // Auto-confirm for now to simplify flow
+      email_confirm: true,
       user_metadata: {
         registration_source: 'saas_bootstrap'
       }
@@ -47,17 +47,19 @@ Deno.serve(async (req) => {
     console.log('User created:', userId)
 
     // 2. Create Academy
+    // The trigger 'on_academy_created_create_subscription' will automatically 
+    // create the SaaS Subscription (Trial) in 'saas_subscriptions' table.
     const { data: academyData, error: academyError } = await supabaseClient
       .from('academies')
       .insert({
         name: academyName,
-        timezone: 'America/Sao_Paulo' // Default
+        timezone: 'America/Sao_Paulo'
       })
       .select()
       .single()
 
     if (academyError) {
-      // Rollback user (optional but good practice)
+      // Rollback user
       await supabaseClient.auth.admin.deleteUser(userId)
       throw academyError
     }
@@ -65,44 +67,26 @@ Deno.serve(async (req) => {
     console.log('Academy created:', academyId)
 
     // 3. Create Admin Profile
-    // Note: profiles usually have a trigger on auth.users, but we might need to update it 
-    // or insert it if the trigger doesn't handle everything. 
-    // In this project config, let's assume we need to insert/update.
-    // Let's check if a profile was auto-created by a trigger? 
-    // Usually standard Supabase starters have a trigger.
-    // Safest is to UPSERT.
+    // We use UPSERT to be safe.
     const { error: profileError } = await supabaseClient
       .from('profiles')
       .upsert({
         id: userId,
         email: email,
         name: adminName,
-        role: 'admin',
-        roles: ['admin'], // CRITICAL: Array field for multi-role support
+        role: 'admin',      // Legacy/Primary role
+        // roles: ['admin'], // Removed to avoid schema mismatch if column doesn't exist
         status: 'active',
         academy_id: academyId
       })
 
-    if (profileError) throw profileError
+    if (profileError) {
+      console.error('Profile creation failed:', profileError);
+      throw profileError;
+    }
     console.log('Profile created/updated')
 
-    // 4. Create Subscription (Trial)
-    const trialEnd = new Date()
-    trialEnd.setDate(trialEnd.getDate() + 7)
-
-    const { error: subError } = await supabaseClient
-      .from('academy_subscriptions')
-      .insert({
-        academy_id: academyId,
-        status: 'trialing',
-        trial_end: trialEnd.toISOString(),
-        payment_provider: 'mercadopago'
-      })
-
-    if (subError) throw subError
-    console.log('Subscription created')
-
-    // 5. Notify Super Admin (Jailson)
+    // 4. Notification (Optional)
     try {
       const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
       if (RESEND_API_KEY) {
@@ -110,23 +94,20 @@ Deno.serve(async (req) => {
         await resend.emails.send({
           from: "BJJ Academy System <system@academybjj.com.br>",
           to: "jailsonrcoach@gmail.com",
-          subject: `🚀 Nova Academia Cadastrada: ${academyName}`,
+          subject: `🚀 Nova Academia (Trial): ${academyName}`,
           html: `
-            <h1>Nova Academia no Sistema</h1>
+            <h1>Nova Academia Iniciou Trial</h1>
             <p><strong>Academia:</strong> ${academyName}</p>
             <p><strong>Admin:</strong> ${adminName}</p>
             <p><strong>Email:</strong> ${email}</p>
             <p><strong>Data:</strong> ${new Date().toLocaleString()}</p>
-            <p><strong>Trial até:</strong> ${trialEnd.toLocaleDateString()}</p>
             <hr>
-            <p>Este é um email automático do sistema.</p>
+            <p>O trial de 7 dias foi ativado automaticamente.</p>
           `
         });
-        console.log('Admin notification sent');
       }
     } catch (emailError) {
       console.error('Failed to send admin notification:', emailError);
-      // Don't fail the request, just log
     }
 
     return new Response(
@@ -152,4 +133,3 @@ Deno.serve(async (req) => {
     )
   }
 })
-

@@ -24,7 +24,8 @@ export interface UserProfile {
   address_city?: string;
   address_state?: string;
   address_zip?: string;
-  is_super_admin?: boolean; // Added for SaaS Management
+  is_super_admin?: boolean;
+  onboarding_completed?: boolean;
 }
 
 interface SignUpData {
@@ -48,6 +49,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUpWithProfile: (data: SignUpData) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -71,6 +73,78 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        setProfile(null);
+        return;
+      }
+
+      if (data) {
+        // Fetch Onboarding Status
+        const { data: academyData } = await supabase
+          .from('academies')
+          .select('onboarding_completed')
+          .eq('id', data.academy_id)
+          .single();
+
+        const roles = data.roles && data.roles.length > 0 ? data.roles : [data.role];
+
+        const profileWithRoles: UserProfile = {
+          ...data,
+          roles: roles as UserRole[],
+          onboarding_completed: academyData?.onboarding_completed || false
+        };
+
+        setProfile(profileWithRoles);
+
+        // Check SaaS Access
+        try {
+          // @ts-ignore
+          const { data: accessData } = await supabase.rpc('academy_has_access', {
+            _academy_id: data.academy_id
+          });
+          setHasAccess(accessData === true);
+        } catch (e) {
+          console.error('Error checking access:', e);
+          setHasAccess(true); // Default to allow if RPC fails? or false?
+        }
+
+        // Restore active role from localStorage or set default
+        const savedRole = localStorage.getItem(ACTIVE_ROLE_KEY) as UserRole | null;
+        if (savedRole && roles.includes(savedRole)) {
+          setActiveRoleState(savedRole);
+        } else {
+          // Default to first role in array (prioritize admin > professor > student)
+          const priorityOrder: UserRole[] = ['admin', 'professor', 'student'];
+          const defaultRole = priorityOrder.find(r => roles.includes(r)) || roles[0];
+          setActiveRoleState(defaultRole as UserRole);
+          localStorage.setItem(ACTIVE_ROLE_KEY, defaultRole);
+        }
+      } else {
+        setProfile(null);
+      }
+    } catch (error) {
+      console.error('Error in fetchProfile:', error);
+      setProfile(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchProfile(user.id);
+    }
+  };
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -91,9 +165,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
+          // Debounce slightly to avoid race conditions
           setTimeout(() => {
             fetchProfile(session.user.id);
-          }, 0);
+          }, 100);
         } else {
           setProfile(null);
           setActiveRoleState(null);
@@ -106,60 +181,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data) {
-        // Ensure roles array exists and has at least the legacy role
-        const roles = data.roles && data.roles.length > 0
-          ? data.roles
-          : [data.role];
-
-        const profileWithRoles: UserProfile = {
-          ...data,
-          roles: roles as UserRole[]
-        };
-
-        setProfile(profileWithRoles);
-
-        // Check SaaS Access
-        // @ts-ignore
-        const { data: accessData } = await supabase.rpc('academy_has_access', {
-          _academy_id: data.academy_id
-        });
-        setHasAccess(accessData === true);
-
-
-
-        // Restore active role from localStorage or set default
-        const savedRole = localStorage.getItem(ACTIVE_ROLE_KEY) as UserRole | null;
-        if (savedRole && roles.includes(savedRole)) {
-          setActiveRoleState(savedRole);
-        } else {
-          // Default to first role in array (prioritize admin > professor > student)
-          const priorityOrder: UserRole[] = ['admin', 'professor', 'student'];
-          const defaultRole = priorityOrder.find(r => roles.includes(r)) || roles[0];
-          setActiveRoleState(defaultRole as UserRole);
-          localStorage.setItem(ACTIVE_ROLE_KEY, defaultRole);
-        }
-      } else {
-        setProfile(null);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      setProfile(null);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -258,7 +279,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signIn,
       signUp,
       signUpWithProfile,
-      signOut
+      signOut,
+      refreshProfile
     }}>
       {children}
     </AuthContext.Provider>

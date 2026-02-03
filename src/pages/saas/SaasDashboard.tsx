@@ -47,16 +47,22 @@ export default function SaasDashboard() {
                 }
             }
 
-            // 3. Total Students System-wide (All academies)
-            // Note: This might be heavy if millions of students, but fine for thousands.
-            const { count: totalStudents } = await supabase
-                .from('students')
-                .select('id', { count: 'exact', head: true });
+            // 3. Recent Active Subscriptions
+            const { data: recentActive } = await supabase
+                .from('saas_subscriptions')
+                .select(`
+            id, 
+            status, 
+            academies:academy_id (name, phone)
+        `)
+                .eq('status', 'active')
+                .order('updated_at', { ascending: false })
+                .limit(5);
 
             return {
                 activeAcademies: activeAcademies || 0,
                 mrr: mrr, // in cents
-                totalStudents: totalStudents || 0
+                recentActive: recentActive || []
             };
         }
     });
@@ -95,33 +101,52 @@ export default function SaasDashboard() {
                             </p>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total de Alunos (SaaS)</CardTitle>
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-8 w-20" /> : (
-                                <div className="text-2xl font-bold">{stats?.totalStudents}</div>
-                            )}
-                            <p className="text-xs text-muted-foreground">
-                                Em todas as academias
-                            </p>
-                        </CardContent>
-                    </Card>
+                    {/* Total Students Card Removed */}
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                    <Card className="col-span-7">
+                    {/* Active Subscriptions List */}
+                    <Card className="col-span-4">
+                        <CardHeader>
+                            <CardTitle>Assinaturas Ativas Recentemente</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {isLoading ? (
+                                <Skeleton className="h-[200px] w-full" />
+                            ) : (
+                                <div className="space-y-4">
+                                    {stats?.recentActive?.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">Nenhuma assinatura ativa encontrada.</p>
+                                    ) : (
+                                        stats?.recentActive?.map((sub: any) => (
+                                            <div key={sub.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
+                                                <div>
+                                                    <p className="font-medium text-sm">{sub.academies?.name}</p>
+                                                    <p className="text-xs text-muted-foreground">{sub.academies?.phone || 'Sem telefone'}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full inline-block">
+                                                        Ativo
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <Card className="col-span-3">
                         <CardHeader>
                             <CardTitle>Ações Rápidas</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex gap-4">
-                                <Button asChild>
+                            <div className="flex flex-col gap-4">
+                                <Button asChild className="w-full">
                                     <Link to="/saas/assinaturas">Gerenciar Assinaturas</Link>
                                 </Button>
-                                <Button variant="outline" asChild>
+                                <Button variant="outline" asChild className="w-full">
                                     <Link to="/saas/planos">Gerenciar Planos</Link>
                                 </Button>
                             </div>

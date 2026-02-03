@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -94,6 +95,9 @@ export function CreatePlanModal({ open, onClose, plan }: Props) {
           <DialogTitle>
             {isEditing ? 'Editar Plano' : 'Novo Plano'}
           </DialogTitle>
+          <DialogDescription>
+            {isEditing ? 'Edite as informações do plano de assinatura.' : 'Preencha os dados para criar um novo plano.'}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">

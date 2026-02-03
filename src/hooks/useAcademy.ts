@@ -41,6 +41,9 @@ export function useUpdateAcademy() {
       whatsapp?: string | null;
       responsible_name?: string | null;
       address_json?: any;
+
+      // New fields
+      bank_info?: any;
     }) => {
       if (!profile?.academy_id) throw new Error('No academy');
 

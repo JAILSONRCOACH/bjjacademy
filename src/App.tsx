@@ -26,6 +26,7 @@ import AdminAcademy from "./pages/admin/AdminAcademy";
 import AdminBilling from "./pages/admin/AdminBilling";
 import AdminContracts from "./pages/admin/AdminContracts";
 import AdminReports from "./pages/admin/AdminReports";
+import OnboardingWizard from "./pages/admin/OnboardingWizard";
 import ContractSign from "./pages/ContractSign";
 import StudentContracts from "./pages/student/StudentContracts";
 import ProfessorStudents from "./pages/professor/ProfessorStudents";
@@ -177,6 +178,14 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminReports />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/onboarding"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <OnboardingWizard />
                   </ProtectedRoute>
                 }
               />

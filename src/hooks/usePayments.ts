@@ -63,17 +63,18 @@ export function useInvoices(filters?: { status?: string; studentId?: string }) {
 }
 
 export function useStudentInvoices() {
-  const { profile } = useAuth();
+  const { profile, activeRole } = useAuth(); // Get activeRole
 
   return useQuery({
     queryKey: ['student-invoices', profile?.id],
     queryFn: async () => {
       // First get the student record linked to this profile
+      // Use maybeSingle to avoid 406 error if no student record found (e.g. admin)
       const { data: student, error: studentError } = await supabase
         .from('students')
         .select('id, status, suspended_reason, suspended_at')
         .eq('profile_id', profile!.id)
-        .single();
+        .maybeSingle();
 
       if (studentError || !student) {
         return { invoices: [], student: null };
@@ -88,7 +89,8 @@ export function useStudentInvoices() {
       if (error) throw error;
       return { invoices: invoices as Invoice[], student };
     },
-    enabled: !!profile?.id,
+    // Only fetch if profile exists AND active role is student
+    enabled: !!profile?.id && activeRole === 'student',
   });
 }
 

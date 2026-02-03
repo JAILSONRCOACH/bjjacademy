@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -105,6 +106,9 @@ export function EditProfessorModal({ professor, onClose }: EditProfessorModalPro
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Editar Professor</DialogTitle>
+          <DialogDescription>
+            Atualize os dados cadastrais do professor.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

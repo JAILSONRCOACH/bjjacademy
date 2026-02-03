@@ -23,6 +23,11 @@ export function RoleSwitcher() {
   const { profile, activeRole, setActiveRole, hasMultipleRoles } = useAuth();
   const navigate = useNavigate();
 
+  // Hide RoleSwitcher if Super Admin
+  if (profile?.is_super_admin) {
+    return null;
+  }
+
   if (!profile || !hasMultipleRoles) {
     return null;
   }
@@ -53,7 +58,7 @@ export function RoleSwitcher() {
           const config = roleConfig[role];
           const Icon = config.icon;
           const isActive = role === activeRole;
-          
+
           return (
             <DropdownMenuItem
               key={role}

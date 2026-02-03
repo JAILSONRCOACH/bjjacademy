@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -118,6 +119,11 @@ export function CreateProfessorModal({ open, onOpenChange }: CreateProfessorModa
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{createdCredentials ? 'Professor Criado!' : 'Novo Professor'}</DialogTitle>
+          <DialogDescription>
+            {createdCredentials
+              ? 'O cadastro foi realizado com sucesso. Envie as credenciais abaixo.'
+              : 'Preencha os dados pessoais do professor para criar o acesso.'}
+          </DialogDescription>
         </DialogHeader>
 
         {createdCredentials ? (

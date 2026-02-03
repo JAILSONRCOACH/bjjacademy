@@ -54,6 +54,16 @@ export default function AdminAcademy() {
     neighborhood: '',
     city: '',
     state: '',
+    bank_info: {
+      holder_name: '',
+      holder_document: '',
+      bank_code: '',
+      type: 'checking',
+      branch: '',
+      branch_digit: '',
+      account: '',
+      account_digit: ''
+    }
   });
 
   // Initialize form
@@ -81,6 +91,8 @@ export default function AdminAcademy() {
         neighborhood: addr.neighborhood || '',
         city: addr.city || '',
         state: addr.state || '',
+
+        bank_info: (academy as any).bank_info || {}
       });
     }
   }, [academy, isEditing]);
@@ -187,6 +199,7 @@ export default function AdminAcademy() {
         cpf: formData.doc_type === 'cpf' ? formData.cpf : null,
         address: fullAddress,
         address_json: addressJson,
+        bank_info: formData.bank_info,
       });
 
       toast({
@@ -327,6 +340,45 @@ export default function AdminAcademy() {
                 {/* Map preview could go here */}
               </CardContent>
             </Card>
+
+            {/* Bank Info Card */}
+            <Card className="md:col-span-3">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Dados Bancários
+                </CardTitle>
+                <CardDescription>Para recebimento de mensalidades (Pagar.me)</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-6 sm:grid-cols-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Titular</p>
+                    <p>{(academy as any).bank_info?.holder_name || '—'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Documento</p>
+                    <p>{(academy as any).bank_info?.holder_document || '—'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Banco</p>
+                    <p>{(academy as any).bank_info?.bank_code || '—'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Tipo</p>
+                    <p>{(academy as any).bank_info?.type === 'savings' ? 'Poupança' : 'Corrente'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Agência</p>
+                    <p>{(academy as any).bank_info?.branch || '—'} - {(academy as any).bank_info?.branch_digit}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Conta</p>
+                    <p>{(academy as any).bank_info?.account || '—'} - {(academy as any).bank_info?.account_digit}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
@@ -344,9 +396,10 @@ export default function AdminAcademy() {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="general" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsList className="grid w-full grid-cols-3 mb-6">
                   <TabsTrigger value="general">🏢 Dados Gerais</TabsTrigger>
                   <TabsTrigger value="address">📍 Endereço</TabsTrigger>
+                  <TabsTrigger value="banking">🏦 Financeiro</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="general" className="space-y-6">
@@ -552,6 +605,147 @@ export default function AdminAcademy() {
                     </div>
                   </div>
                 </TabsContent>
+
+                <TabsContent value="banking" className="space-y-6">
+                  <div className="bg-muted/50 p-4 rounded-lg flex items-start gap-4 mb-6">
+                    <div className="p-2 bg-primary/10 rounded-full">
+                      <CreditCard className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg">Dados para Recebimento</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Esses dados são obrigatórios caso você queira processar pagamentos de alunos através da plataforma (Pagar.me).
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="holder_name">Nome do Titular da Conta</Label>
+                      <Input
+                        id="holder_name"
+                        value={formData.bank_info?.holder_name || ''}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          bank_info: { ...prev.bank_info, holder_name: e.target.value }
+                        }))}
+                        placeholder="Ex: João da Silva"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="holder_doc">CPF/CNPJ do Titular</Label>
+                      <Input
+                        id="holder_doc"
+                        value={formData.bank_info?.holder_document || ''}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          bank_info: { ...prev.bank_info, holder_document: e.target.value }
+                        }))}
+                        placeholder="CPF ou CNPJ vinculado à conta"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="bank_code">Banco</Label>
+                      <select
+                        id="bank_code"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={formData.bank_info?.bank_code || ''}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          bank_info: { ...prev.bank_info, bank_code: e.target.value }
+                        }))}
+                      >
+                        <option value="">Selecione um banco...</option>
+                        <option value="001">001 - Banco do Brasil</option>
+                        <option value="104">104 - Caixa Econômica Federal</option>
+                        <option value="033">033 - Santander</option>
+                        <option value="237">237 - Bradesco</option>
+                        <option value="341">341 - Itaú</option>
+                        <option value="260">260 - Nubank</option>
+                        <option value="077">077 - Inter</option>
+                        <option value="212">212 - Banco Original</option>
+                        <option value="655">655 - Banco Votorantim</option>
+                        <option value="422">422 - Banco Safra</option>
+                        <option value="748">748 - Sicredi</option>
+                        <option value="756">756 - Sicoob</option>
+                        <option value="197">197 - Stone Pagamentos</option>
+                        <option value="290">290 - PagSeguro</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="account_type">Tipo de Conta</Label>
+                      <select
+                        id="account_type"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={formData.bank_info?.type || 'checking'}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          bank_info: { ...prev.bank_info, type: e.target.value }
+                        }))}
+                      >
+                        <option value="checking">Conta Corrente</option>
+                        <option value="savings">Conta Poupança</option>
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="branch">Agência</Label>
+                        <Input
+                          id="branch"
+                          value={formData.bank_info?.branch || ''}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            bank_info: { ...prev.bank_info, branch: e.target.value }
+                          }))}
+                          placeholder="Ex: 0001"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="branch_digit">Dígito Ag.</Label>
+                        <Input
+                          id="branch_digit"
+                          value={formData.bank_info?.branch_digit || ''}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            bank_info: { ...prev.bank_info, branch_digit: e.target.value }
+                          }))}
+                          placeholder="Ex: X"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="account">Conta</Label>
+                        <Input
+                          id="account"
+                          value={formData.bank_info?.account || ''}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            bank_info: { ...prev.bank_info, account: e.target.value }
+                          }))}
+                          placeholder="Ex: 12345"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="account_digit">Dígito Conta</Label>
+                        <Input
+                          id="account_digit"
+                          value={formData.bank_info?.account_digit || ''}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            bank_info: { ...prev.bank_info, account_digit: e.target.value }
+                          }))}
+                          placeholder="Ex: 6"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
               </Tabs>
 
               <Separator className="my-6" />
@@ -573,6 +767,6 @@ export default function AdminAcademy() {
           </Card>
         )}
       </div>
-    </DashboardLayout>
+    </DashboardLayout >
   );
 }
