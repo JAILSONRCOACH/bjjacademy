@@ -4,14 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStudentByProfileId, useBeltRules } from '@/hooks/useStudents';
-import { useStudentAttendance, useCheckIn, useStudentEnrolledSlots } from '@/hooks/useAttendance';
+import { useStudentAttendance, useCheckIn, useTodayClassSlots } from '@/hooks/useAttendance';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  AlertCircle, CheckCircle, Clock, XCircle, Loader2, Ban, 
+import {
+  AlertCircle, CheckCircle, Clock, XCircle, Loader2, Ban,
   Wifi, Trophy, Target, BookOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -39,13 +39,13 @@ export default function StudentDashboard() {
   const navigate = useNavigate();
   const [showBlockedModal, setShowBlockedModal] = useState(false);
   const [showSlotModal, setShowSlotModal] = useState(false);
-  
+
   const { data: student, isLoading: studentLoading } = useStudentByProfileId(profile?.id);
   const { data: beltRules = [] } = useBeltRules(profile?.academy_id);
   const attendanceStudentId = student?.profile_id || profile?.id;
   const { data: attendance = [], isLoading: attendanceLoading } = useStudentAttendance(attendanceStudentId);
-  // Get only the class slots the student is enrolled in
-  const { data: enrolledSlots = [], isLoading: slotsLoading } = useStudentEnrolledSlots(student?.id, profile?.academy_id);
+  // Get all class slots for today to allow check-in
+  const { data: todaySlots = [], isLoading: slotsLoading } = useTodayClassSlots(profile?.academy_id);
   const checkInMutation = useCheckIn();
 
   const isBlocked = student?.financial_status === 'blocked';
@@ -55,20 +55,20 @@ export default function StudentDashboard() {
   const currentRule = beltRules.find(r => r.belt === student?.belt_current);
   const classesPerStripe = currentRule?.classes_per_stripe || 30;
   const stripesToPromote = currentRule?.stripes_to_promote || 4;
-  
+
   // Calculate progress
   const classesInCycle = student?.belt_cycle_classes || 0;
   const totalClasses = student?.total_classes || 0;
   const currentStripes = student?.stripes_cached || 0;
-  
+
   // Total classes needed to next belt (all stripes)
   const totalClassesForBelt = classesPerStripe * stripesToPromote;
   const classesInBeltCycle = classesInCycle % totalClassesForBelt;
-  
+
   // Progress to next stripe
   const classesToNextStripe = classesPerStripe - (classesInCycle % classesPerStripe);
   const progressToStripe = ((classesInCycle % classesPerStripe) / classesPerStripe) * 100;
-  
+
   // Next objective
   const nextStripe = currentStripes + 1;
   const isEligibleForBelt = currentStripes >= 4 && student?.belt_current !== 'black';
@@ -166,7 +166,7 @@ export default function StudentDashboard() {
               </div>
               <Wifi className="h-8 w-8 text-white/60" />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-8 mt-6">
               <div>
                 <p className="text-white/70 text-sm uppercase tracking-wide">Aulas no Ciclo</p>
@@ -234,7 +234,7 @@ export default function StudentDashboard() {
               </div>
               <div className="flex gap-1">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div 
+                  <div
                     key={i}
                     className={cn(
                       "h-2 flex-1 rounded",
@@ -244,7 +244,7 @@ export default function StudentDashboard() {
                 ))}
               </div>
             </div>
-            
+
             <div className="flex justify-between items-center p-4 rounded-lg bg-muted/50">
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Próximo Objetivo</p>
@@ -344,7 +344,7 @@ export default function StudentDashboard() {
             <Button variant="outline" onClick={() => setShowBlockedModal(false)}>
               Fechar
             </Button>
-            <Button 
+            <Button
               variant="default"
               onClick={() => {
                 setShowBlockedModal(false);
@@ -360,7 +360,7 @@ export default function StudentDashboard() {
       <SelectClassSlotModal
         open={showSlotModal}
         onOpenChange={setShowSlotModal}
-        slots={enrolledSlots}
+        slots={todaySlots}
         isLoading={slotsLoading}
         onSelect={handleCheckIn}
         isPending={checkInMutation.isPending}

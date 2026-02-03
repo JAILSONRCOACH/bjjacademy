@@ -70,7 +70,7 @@ export function useAttendance(options: UseAttendanceOptions = {}) {
       let result = data as unknown as Attendance[];
       if (studentSearch) {
         const searchLower = studentSearch.toLowerCase();
-        result = result.filter(a => 
+        result = result.filter(a =>
           a.student?.name?.toLowerCase().includes(searchLower)
         );
       }
@@ -104,13 +104,13 @@ export function useCheckIn() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ 
-      studentId, 
-      academyId, 
-      classSlotId 
-    }: { 
-      studentId: string; 
-      academyId: string; 
+    mutationFn: async ({
+      studentId,
+      academyId,
+      classSlotId
+    }: {
+      studentId: string;
+      academyId: string;
       classSlotId: string;
     }) => {
       const { error } = await supabase.from('attendance').insert({
@@ -158,10 +158,18 @@ export function useTodayClassSlots(academyId: string | undefined) {
 
       if (error) throw error;
 
-      // Filter by current day of week
-      const todaySlots = (data || []).filter(slot =>
-        (slot.day_of_week as number[]).includes(dayOfWeek)
-      );
+      // Filter by current day of week and ensure class hasn't finished yet
+      const todaySlots = (data || []).filter(slot => {
+        const isToday = (slot.day_of_week as number[]).includes(dayOfWeek);
+        if (!isToday) return false;
+
+        // Check if class has ended
+        const [hours, minutes] = slot.end_time.split(':').map(Number);
+        const slotEndDate = new Date();
+        slotEndDate.setHours(hours, minutes, 0, 0);
+
+        return now <= slotEndDate;
+      });
 
       return todaySlots;
     },
