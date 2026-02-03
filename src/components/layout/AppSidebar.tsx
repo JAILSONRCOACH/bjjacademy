@@ -104,6 +104,7 @@ export function AppSidebar() {
         {
           title: 'Financeiro',
           items: [
+            { href: '/admin/billing', label: 'Assinatura PRO', icon: CreditCard },
             { href: '/admin/financeiro', label: 'Financeiro', icon: DollarSign },
             { href: '/admin/cobrancas', label: 'Cobranças', icon: CreditCard },
             { href: '/admin/contratos', label: 'Contratos', icon: FileText },

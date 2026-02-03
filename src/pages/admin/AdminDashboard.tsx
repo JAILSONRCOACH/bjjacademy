@@ -8,7 +8,8 @@ import {
   Award,
   Calendar,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Crown
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,6 +19,8 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { FinancialDashboard } from '@/components/finance/FinancialDashboard';
 import { OverdueAlertsCard } from '@/components/finance/OverdueAlertsCard';
+import { Badge } from '@/components/ui/badge';
+import { useSaasSubscription } from '@/hooks/useSaasSubscription';
 
 interface DashboardStats {
   totalStudents: number;
@@ -152,15 +155,55 @@ function formatCurrency(value: number) {
 
 export default function AdminDashboard() {
   const { data: stats, isLoading } = useDashboardStats();
+  const { data: subscription } = useSaasSubscription();
+
+  const trialDays = subscription?.daysRemainingTrial ?? null;
+  const isPro = !!subscription?.isActive;
+  const isTrial = !!subscription?.isTrial;
+  const isPastDue = !!subscription?.isPastDue;
+  const hasSaasStatus = !!subscription?.status;
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Visão geral da sua academia
-          </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground">
+              Visão geral da sua academia
+            </p>
+          </div>
+
+          {hasSaasStatus && (
+            <div className="flex flex-wrap items-center gap-2">
+              {isPro && (
+                <Badge className="bg-emerald-600 hover:bg-emerald-600">
+                  <Crown className="h-3.5 w-3.5 mr-1" />
+                  PRO ativo
+                </Badge>
+              )}
+
+              {isTrial && (
+                <>
+                  <Badge variant="secondary">
+                    Teste{typeof trialDays === 'number' ? ` • ${trialDays} dia(s)` : ''}
+                  </Badge>
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/admin/billing">Virar PRO</Link>
+                  </Button>
+                </>
+              )}
+
+              {isPastDue && (
+                <>
+                  <Badge variant="destructive">Pagamento pendente</Badge>
+                  <Button asChild size="sm" variant="destructive">
+                    <Link to="/admin/billing">Regularizar</Link>
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Overdue Alerts - Always visible at top */}

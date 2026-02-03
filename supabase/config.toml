@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.suspend-overdue]
 verify_jwt = false
+
+[functions.pagarme-create-subscription]
+verify_jwt = true
+
+[functions.pagarme-webhook]
+verify_jwt = false

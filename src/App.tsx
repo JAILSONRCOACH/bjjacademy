@@ -23,7 +23,8 @@ import AdminModalities from "./pages/admin/AdminModalities";
 import AdminAgenda from "./pages/admin/AdminAgenda";
 import AdminRegistrations from "./pages/admin/AdminRegistrations";
 import AdminAcademy from "./pages/admin/AdminAcademy";
-import AdminBilling from "./pages/admin/AdminBilling";
+import AdminCharges from "./pages/admin/AdminBilling";
+import AdminBilling from "./pages/admin/Billing";
 import AdminContracts from "./pages/admin/AdminContracts";
 import AdminReports from "./pages/admin/AdminReports";
 import OnboardingWizard from "./pages/admin/OnboardingWizard";
@@ -159,6 +160,14 @@ const App = () => (
               />
               <Route
                 path="/admin/cobrancas"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminCharges />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/billing"
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminBilling />
