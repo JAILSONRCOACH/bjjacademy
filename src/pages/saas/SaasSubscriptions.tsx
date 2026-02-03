@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Search, Loader2, MoreHorizontal, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Search, Loader2, MoreHorizontal, ShieldAlert, ShieldCheck, Phone } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -35,7 +35,9 @@ export default function SaasSubscriptions() {
           academies:academy_id (
             id,
             name,
-            phone
+            phone,
+            whatsapp,
+            responsible_name
           )
         `);
 
@@ -58,6 +60,10 @@ export default function SaasSubscriptions() {
                     admin_email: admins?.[0]?.email || 'N/A',
                     admin_phone: admins?.[0]?.phone || 'N/A',
                     admin_cpf: admins?.[0]?.cpf || 'N/A',
+                    // Use Academy Responsible Name if available, otherwise Admin Name
+                    contact_name: sub.academies?.responsible_name || admins?.[0]?.name || 'N/A',
+                    // Use Academy WhatsApp/Phone if available, otherwise Admin Phone
+                    contact_phone: sub.academies?.whatsapp || sub.academies?.phone || admins?.[0]?.phone || 'N/A',
                     admin_address: admins?.[0]?.address_street ?
                         `${admins[0].address_street}, ${admins[0].address_number || ''} - ${admins[0].address_neighborhood || ''}, ${admins[0].address_city || ''}/${admins[0].address_state || ''}`
                         : 'Endereço não inf.'
@@ -165,9 +171,10 @@ export default function SaasSubscriptions() {
                                                     <div className="text-xs text-muted-foreground">{sub.admin_cpf || 'CPF não inf.'}</div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="text-sm">{sub.admin_phone}</div>
-                                                    <div className="text-xs text-muted-foreground max-w-[150px] truncate" title={sub.admin_address}>
-                                                        {sub.admin_address}
+                                                    <div className="text-sm font-medium">{sub.contact_name}</div>
+                                                    <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                                        <Phone className="h-3 w-3" />
+                                                        {sub.contact_phone}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
