@@ -10,9 +10,10 @@ type UserRole = 'admin' | 'professor' | 'student';
 interface ProtectedRouteProps {
   children: ReactNode;
   allowedRoles?: UserRole[];
+  requireSuperAdmin?: boolean;
 }
 
-export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, allowedRoles, requireSuperAdmin }: ProtectedRouteProps) {
   const { user, profile, loading, activeRole, hasAccess } = useAuth();
   const location = useLocation();
   const { data: studentData, isLoading: loadingStudentData } = useStudentInvoices();
@@ -48,9 +49,17 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <LockScreen />;
   }
 
+  // Super Admin Check
+  if (requireSuperAdmin) {
+    if (!profile.is_super_admin) {
+      // Redirect to normal dashboard or home
+      return <Navigate to="/" replace />;
+    }
+  }
+
   // Check if user has any of the allowed roles in their roles array
   // AND if their active role matches
-  if (allowedRoles && allowedRoles.length > 0) {
+  if (!requireSuperAdmin && allowedRoles && allowedRoles.length > 0) {
     const hasRequiredRole = profile.roles?.some(role => allowedRoles.includes(role));
     const activeRoleAllowed = activeRole && allowedRoles.includes(activeRole);
 

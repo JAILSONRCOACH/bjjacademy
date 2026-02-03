@@ -24,6 +24,7 @@ export interface UserProfile {
   address_city?: string;
   address_state?: string;
   address_zip?: string;
+  is_super_admin?: boolean; // Added for SaaS Management
 }
 
 interface SignUpData {

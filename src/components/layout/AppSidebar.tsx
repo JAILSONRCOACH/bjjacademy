@@ -27,6 +27,7 @@ import {
   X,
   BarChart3,
   Settings,
+  ShieldAlert, // For SaaS
 } from 'lucide-react';
 import { RoleSwitcher } from '@/components/RoleSwitcher';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
@@ -55,6 +56,26 @@ export function AppSidebar() {
   }, [location.pathname]);
 
   const getNavGroups = (): NavGroup[] => {
+    // SaaS Super Admin Menu
+    if (profile?.is_super_admin) {
+      return [
+        {
+          title: 'SaaS Admin',
+          items: [
+            { href: '/saas/dashboard', label: 'Visão Geral', icon: LayoutDashboard },
+            { href: '/saas/assinaturas', label: 'Assinaturas', icon: ShieldAlert },
+            { href: '/saas/planos', label: 'Planos', icon: DollarSign },
+          ]
+        },
+        // Include normal admin links if they also want to manage their own specific academy instance
+        // For now, let's keep it focused or append the rest if they are also an admin.
+        // Usually Super Admin is also an Admin of a "Main" academy or just system wide. 
+        // Let's assume they want to see everything, but to avoid clutter, just the SaaS stuff usually. 
+        // But if they are debugging, maybe they need the rest? 
+        // Let's return JUST SaaS for now to verify it works, or append if role is admin.
+      ];
+    }
+
     if (activeRole === 'admin') {
       return [
         {

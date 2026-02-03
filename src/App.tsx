@@ -38,6 +38,9 @@ import StudentAttendance from "./pages/student/StudentAttendance";
 import StudentEvolution from "./pages/student/StudentEvolution";
 import StudentPayments from "./pages/student/StudentPayments";
 import StudentSettings from "./pages/student/StudentSettings";
+import SaasDashboard from "./pages/saas/SaasDashboard";
+import SaasSubscriptions from "./pages/saas/SaasSubscriptions";
+import SaasPlans from "./pages/saas/SaasPlans";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -174,6 +177,33 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminReports />
+                  </ProtectedRoute>
+                }
+              />
+
+
+              {/* SaaS Admin Routes */}
+              <Route
+                path="/saas/dashboard"
+                element={
+                  <ProtectedRoute requireSuperAdmin>
+                    <SaasDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/saas/assinaturas"
+                element={
+                  <ProtectedRoute requireSuperAdmin>
+                    <SaasSubscriptions />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/saas/planos"
+                element={
+                  <ProtectedRoute requireSuperAdmin>
+                    <SaasPlans />
                   </ProtectedRoute>
                 }
               />
