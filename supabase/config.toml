@@ -1,4 +1,4 @@
-project_id = "tllwwcgvhrrfhfzbgxnx"
+project_id = "axjqigkhcyzkqseuzasz"
 
 [functions.n8n-webhook]
 verify_jwt = false
@@ -7,6 +7,12 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.public-registration]
+verify_jwt = false
+
+[functions.resend-credentials]
+verify_jwt = false
+
+[functions.approve-student-registration]
 verify_jwt = false
 
 [functions.mp-create-payment]

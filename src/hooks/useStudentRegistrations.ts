@@ -168,6 +168,291 @@ async function callAdminWebhook(payload: Record<string, unknown>) {
   return response.json();
 }
 
+async function ensureValidSession() {
+  const { data: currentUser, error: currentUserError } = await supabase.auth.getUser();
+
+  if (currentUserError || !currentUser?.user) {
+    const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError || !refreshed?.session?.access_token) {
+      throw new Error('Sessão expirada. Faça login novamente e tente de novo.');
+    }
+    return;
+  }
+
+  // Non-blocking refresh to reduce sporadic 401s when token is near expiration.
+  try {
+    await supabase.auth.refreshSession();
+  } catch (err) {
+    console.warn('Falha ao atualizar sessão antes da aprovação:', err);
+  }
+}
+
+function normalizePersonName(value?: string | null): string {
+  return (value ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+async function approveExistingAccountFallback(registrationId: string) {
+  const { data: registration, error: regError } = await supabase
+    .from('student_registrations')
+    .select('*')
+    .eq('id', registrationId)
+    .eq('status', 'pending')
+    .single();
+
+  if (regError || !registration) {
+    throw new Error(regError?.message || 'Cadastro pendente não encontrado');
+  }
+
+  if (!registration.email) {
+    throw new Error('Cadastro sem email. Não é possível vincular conta existente.');
+  }
+
+  const { data: existingProfile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, academy_id, role, roles, name, email')
+    .eq('email', registration.email)
+    .maybeSingle();
+
+  if (profileError) {
+    throw new Error(`Erro ao buscar perfil existente: ${profileError.message}`);
+  }
+
+  if (!existingProfile?.id) {
+    throw new Error('Falha de autenticação da Edge Function e não há conta existente para fallback.');
+  }
+
+  if (existingProfile.academy_id !== registration.academy_id) {
+    throw new Error('Este email pertence a outra academia e não pode ser aprovado aqui.');
+  }
+
+  if (
+    existingProfile.name &&
+    normalizePersonName(existingProfile.name) !== normalizePersonName(registration.name)
+  ) {
+    throw new Error(
+      'Este email já está vinculado a outra pessoa. Use email diferente para o aluno.',
+    );
+  }
+
+  const currentRoles =
+    Array.isArray(existingProfile.roles) && existingProfile.roles.length > 0
+      ? existingProfile.roles
+      : existingProfile.role
+        ? [existingProfile.role]
+        : [];
+
+  const mergedRoles = Array.from(new Set([...currentRoles, 'student'])) as Array<'admin' | 'professor' | 'student'>;
+  const primaryRole =
+    existingProfile.role && existingProfile.role !== 'student'
+      ? existingProfile.role
+      : 'student';
+
+  const { error: updateProfileError } = await supabase
+    .from('profiles')
+    .update({
+      role: primaryRole as 'admin' | 'professor' | 'student',
+      roles: mergedRoles,
+      status: 'active',
+    })
+    .eq('id', existingProfile.id);
+
+  if (updateProfileError) {
+    throw new Error(`Erro ao atualizar perfil: ${updateProfileError.message}`);
+  }
+
+  const { error: studentError } = await supabase
+    .from('students')
+    .upsert(
+      {
+        id: existingProfile.id,
+        profile_id: existingProfile.id,
+        academy_id: registration.academy_id,
+        name: registration.name,
+        birth_date: registration.birth_date,
+        cpf: registration.cpf,
+        email: registration.email ?? existingProfile.email ?? null,
+        phone: registration.phone ?? null,
+        gender:
+          registration.sex === 'masculino'
+            ? 'male'
+            : registration.sex === 'feminino'
+              ? 'female'
+              : null,
+        weight: registration.weight_kg ?? null,
+        belt_current: normalizeBelt(registration.belt_current),
+        stripes_cached: registration.stripes ?? 0,
+        guardian_name: registration.guardian_name ?? null,
+        guardian_phone: registration.guardian_phone ?? null,
+        status: 'active',
+        category: registration.computed_category ?? null,
+        responsible_instructor_id: registration.instructor_id ?? null,
+        financial_status: 'pending',
+        total_classes: 0,
+        belt_cycle_classes: 0,
+      },
+      { onConflict: 'id' },
+    );
+
+  if (studentError) {
+    throw new Error(`Erro ao criar/alterar aluno: ${studentError.message}`);
+  }
+
+  const { error: approvalError } = await supabase
+    .from('student_registrations')
+    .update({
+      status: 'approved',
+      approved_at: new Date().toISOString(),
+    })
+    .eq('id', registrationId);
+
+  if (approvalError) {
+    throw new Error(`Erro ao finalizar aprovação: ${approvalError.message}`);
+  }
+
+  return {
+    success: true,
+    existing_account: true,
+    email_sent: false,
+    email_error: 'Conta já existente: credenciais preservadas (sem novo envio de email).',
+    credentials: {
+      email: registration.email,
+      temp_password: null,
+    },
+  };
+}
+
+async function approveStudentRegistrationRequest(registrationId: string) {
+  await ensureValidSession();
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const expectedProjectRef = (() => {
+    try {
+      return new URL(supabaseUrl).host.split('.')[0];
+    } catch {
+      return '';
+    }
+  })();
+
+  const decodeJwtPayload = (token: string): Record<string, any> | null => {
+    try {
+      const payload = token.split('.')[1];
+      if (!payload) return null;
+      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const json = atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '='));
+      return JSON.parse(json);
+    } catch {
+      return null;
+    }
+  };
+
+  const validateTokenProject = (token: string) => {
+    const payload = decodeJwtPayload(token);
+    const tokenRef = payload?.ref as string | undefined;
+    if (tokenRef && expectedProjectRef && tokenRef !== expectedProjectRef) {
+      throw new Error(
+        `Sessão inválida para este ambiente (token: ${tokenRef}, projeto: ${expectedProjectRef}). Faça logout e login novamente.`,
+      );
+    }
+  };
+
+  const callApprove = async (token: string) => {
+    const response = await fetch(`${supabaseUrl}/functions/v1/approve-student-registration`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: anonKey,
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        registration_id: registrationId,
+        login_url: `${window.location.origin}/login`,
+      }),
+    });
+
+    const rawBody = await response.text();
+    let responseBody: any = {};
+    try {
+      responseBody = rawBody ? JSON.parse(rawBody) : {};
+    } catch {
+      responseBody = { raw: rawBody };
+    }
+
+    return { response, responseBody };
+  };
+
+  // Force a fresh token before invoking edge functions.
+  const { data: refreshedNow, error: refreshNowError } = await supabase.auth.refreshSession();
+  if (refreshNowError) {
+    console.warn('Falha ao renovar sessão antes da aprovação:', refreshNowError.message);
+  }
+
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+
+  let accessToken = (refreshedNow?.session?.access_token || sessionData?.session?.access_token || '').trim();
+  if (!accessToken) {
+    throw new Error('Sessão expirada. Faça login novamente e tente de novo.');
+  }
+  validateTokenProject(accessToken);
+
+  let { response, responseBody } = await callApprove(accessToken);
+
+  const errorText =
+    responseBody?.error ||
+    responseBody?.message ||
+    responseBody?.details ||
+    responseBody?.raw ||
+    '';
+
+  if (response.status === 401 && /invalid jwt|jwt/i.test(String(errorText))) {
+    const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError || !refreshed?.session?.access_token) {
+      throw new Error('Sessão expirada. Faça logout e login novamente.');
+    }
+
+    accessToken = refreshed.session.access_token.trim();
+    validateTokenProject(accessToken);
+    const retried = await callApprove(accessToken);
+    response = retried.response;
+    responseBody = retried.responseBody;
+  }
+
+  if (!response.ok) {
+    const finalErrorText =
+      responseBody?.error ||
+      responseBody?.message ||
+      responseBody?.details ||
+      responseBody?.raw ||
+      '';
+
+    if (response.status === 401 && /invalid jwt|jwt/i.test(String(finalErrorText))) {
+      // Fallback path for existing users (e.g., professor becoming student) when gateway JWT validation fails.
+      try {
+        return await approveExistingAccountFallback(registrationId);
+      } catch (fallbackError: any) {
+        const payload = accessToken ? decodeJwtPayload(accessToken) : null;
+        const tokenRef = payload?.ref ?? 'unknown';
+        const tokenIss = payload?.iss ?? 'unknown';
+        throw new Error(
+          `${fallbackError?.message || 'Invalid JWT'} (token.ref=${tokenRef}, token.iss=${tokenIss}, project=${expectedProjectRef}).`,
+        );
+      }
+    }
+
+    throw new Error(
+      finalErrorText ||
+      `Erro ${response.status} ao aprovar cadastro`,
+    );
+  }
+
+  return responseBody;
+}
+
 export function useApproveRegistration() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -181,36 +466,48 @@ export function useApproveRegistration() {
       // 3. Create student record
       // 4. Create profile (role: student)
       // 5. Update registration status to approved
-
-      const { data: session } = await supabase.auth.getSession();
-      const accessToken = session?.session?.access_token;
-
-      if (!accessToken) {
-        throw new Error('Usuário não autenticado');
-      }
-
-      const response = await supabase.functions.invoke('approve-student-registration', {
-        body: { registration_id: registrationId, login_url: window.location.origin + '/login' },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message || 'Erro ao aprovar cadastro');
-      }
-
-      return response.data;
+      return approveStudentRegistrationRequest(registrationId);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['student-registrations'] });
       queryClient.invalidateQueries({ queryKey: ['students'] });
 
+      const tempPassword = data?.credentials?.temp_password;
+      const emailSent = data?.email_sent;
+      const emailError = data?.email_error;
+      const existingAccount = data?.existing_account === true;
+
+      if (existingAccount) {
+        toast({
+          title: 'Cadastro aprovado',
+          description: 'Conta já existente (ex.: professor). Papel de aluno adicionado, senha preservada e sem novo envio de credenciais.',
+        });
+        return;
+      }
+
+      if (emailSent === false) {
+        let description = tempPassword
+          ? `Login criado. Senha temporária: ${tempPassword}`
+          : 'Aluno ativado com sucesso.';
+
+        if (emailError) {
+          description += ` Motivo do envio não concluído: ${emailError}`;
+        }
+
+        toast({
+          title: 'Cadastro aprovado, mas o email falhou',
+          description,
+          variant: 'destructive',
+          duration: 15000,
+        });
+        return;
+      }
+
       // Show temp password to admin
-      if (data?.credentials?.temp_password) {
+      if (tempPassword) {
         toast({
           title: 'Cadastro aprovado!',
-          description: `Login criado. Senha temporária: ${data.credentials.temp_password}`,
+          description: `Login criado. Senha temporária: ${tempPassword}`,
           duration: 10000 // 10 seconds
         });
       } else {
@@ -476,18 +773,8 @@ export function useCreateManualRegistration() {
       if (insertError) throw insertError;
 
       // 4. Immediately Approve to send credentials
-      const response = await supabase.functions.invoke('approve-student-registration', {
-        body: { registration_id: inserted.id, login_url: window.location.origin + '/login' },
-        headers: {
-          Authorization: `Bearer ${sessionData.session.access_token}`,
-        },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message || 'Erro ao aprovar cadastro manual');
-      }
-
-      return { ...response.data, registration: inserted };
+      const approved = await approveStudentRegistrationRequest(inserted.id);
+      return { ...approved, registration: inserted };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['student-registrations'] });
@@ -495,12 +782,19 @@ export function useCreateManualRegistration() {
       const pwd = data?.credentials?.temp_password;
       const email = data?.registration?.email || 'email';
       const emailSent = data?.email_sent;
+      const emailError = data?.email_error;
+      const existingAccount = data?.existing_account === true;
 
       let msg = '';
-      if (pwd) {
+      if (existingAccount) {
+        msg = `Cadastro aprovado para ${email}. Conta já existia; papel de aluno adicionado, senha preservada e sem novo envio de credenciais.`;
+      } else if (pwd) {
         msg = `Cadastro criado para ${email}! Senha: ${pwd}`;
         if (emailSent === false) {
           msg += ' (Alerta: Email não enviado/configurado)';
+          if (emailError) {
+            msg += ` Motivo: ${emailError}`;
+          }
         }
       } else {
         msg = 'Cadastro criado e e-mail enviado!';
