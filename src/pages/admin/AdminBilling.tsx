@@ -22,6 +22,25 @@ import {
 import { Label } from '@/components/ui/label';
 import { ConfirmPaymentModal } from '@/components/finance/ConfirmPaymentModal';
 
+function getChargeBreakdown(raw: string | null) {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (
+      typeof parsed?.amount_charged === 'number' &&
+      typeof parsed?.base_amount === 'number'
+    ) {
+      return parsed as {
+        amount_charged: number;
+        base_amount: number;
+      };
+    }
+  } catch (_e) {
+    return null;
+  }
+  return null;
+}
+
 const statusLabels: Record<string, string> = {
   open: 'Em Aberto',
   paid: 'Pago',
@@ -67,13 +86,17 @@ export default function AdminBilling() {
         await navigator.clipboard.writeText(result.pix_copiaecola);
         toast({
           title: 'Cobrança gerada!',
-          description: 'PIX copia e cola copiado para a área de transferência.',
+          description: result.amount_charged
+            ? `PIX copiado. Valor atualizado: ${formatCurrency(result.amount_charged)}`
+            : 'PIX copia e cola copiado para a área de transferência.',
         });
       } else if (result.checkout_url) {
         await navigator.clipboard.writeText(result.checkout_url);
         toast({
           title: 'Cobrança gerada!',
-          description: 'Link de pagamento copiado.',
+          description: result.amount_charged
+            ? `Link copiado. Valor atualizado: ${formatCurrency(result.amount_charged)}`
+            : 'Link de pagamento copiado.',
         });
       }
     } catch (error: unknown) {
@@ -225,7 +248,21 @@ export default function AdminBilling() {
                         <TableCell>
                           {format(new Date(invoice.due_date), 'dd/MM/yyyy', { locale: ptBR })}
                         </TableCell>
-                        <TableCell>{formatCurrency(invoice.amount)}</TableCell>
+                        <TableCell>
+                          {(() => {
+                            const breakdown = getChargeBreakdown(invoice.provider_ref);
+                            const displayAmount = breakdown?.amount_charged ?? invoice.amount;
+                            const hasSurcharge = displayAmount > invoice.amount;
+                            return (
+                              <div>
+                                <p>{formatCurrency(displayAmount)}</p>
+                                {hasSurcharge && (
+                                  <p className="text-xs text-muted-foreground">com multa/juros</p>
+                                )}
+                              </div>
+                            );
+                          })()}
+                        </TableCell>
                         <TableCell>
                           <Badge variant={statusVariants[invoice.status]}>
                             {statusLabels[invoice.status]}

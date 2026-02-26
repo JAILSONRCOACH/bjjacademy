@@ -6,6 +6,57 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface ChargeBreakdown {
+  base_amount: number;
+  late_fee_percent: number;
+  monthly_interest_percent: number;
+  late_fee_amount: number;
+  interest_amount: number;
+  days_overdue: number;
+  amount_charged: number;
+  calculated_at: string;
+}
+
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function parsePercent(raw: unknown, fallback: number): number {
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  if (typeof raw === "string") {
+    const normalized = raw.replace(",", ".").trim();
+    const parsed = Number(normalized);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return fallback;
+}
+
+function calculateDaysOverdue(dueDateIso: string): number {
+  const due = new Date(`${dueDateIso}T00:00:00`);
+  const now = new Date();
+  const dueUtc = Date.UTC(due.getUTCFullYear(), due.getUTCMonth(), due.getUTCDate());
+  const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const diffDays = Math.floor((todayUtc - dueUtc) / 86400000);
+  return Math.max(0, diffDays);
+}
+
+function parseStoredBreakdown(raw: unknown): ChargeBreakdown | null {
+  if (!raw) return null;
+  try {
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    if (
+      typeof parsed?.amount_charged === "number" &&
+      typeof parsed?.base_amount === "number" &&
+      typeof parsed?.days_overdue === "number"
+    ) {
+      return parsed as ChargeBreakdown;
+    }
+  } catch (_e) {
+    return null;
+  }
+  return null;
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -53,7 +104,7 @@ serve(async (req) => {
       .select(`
         *,
         student:students(id, name, email, phone, cpf),
-        academy:academies(id, name)
+        academy:academies(id, name, bank_info)
       `)
       .eq("id", invoice_id)
       .single();
@@ -73,18 +124,47 @@ serve(async (req) => {
       );
     }
 
+    const bankInfo = (invoice.academy as { bank_info?: Record<string, unknown> } | null)?.bank_info || {};
+    const baseAmount = Number(invoice.amount);
+    const lateFeePercent = parsePercent(bankInfo.late_fee_percent, 2);
+    const monthlyInterestPercent = parsePercent(bankInfo.monthly_interest_percent, 2);
+    const daysOverdue = calculateDaysOverdue(invoice.due_date);
+    const lateFeeAmount = daysOverdue > 0 ? roundMoney(baseAmount * (lateFeePercent / 100)) : 0;
+    const interestAmount =
+      daysOverdue > 0
+        ? roundMoney(baseAmount * (monthlyInterestPercent / 100) * (daysOverdue / 30))
+        : 0;
+    const amountCharged = roundMoney(baseAmount + lateFeeAmount + interestAmount);
+
+    const chargeBreakdown: ChargeBreakdown = {
+      base_amount: baseAmount,
+      late_fee_percent: lateFeePercent,
+      monthly_interest_percent: monthlyInterestPercent,
+      late_fee_amount: lateFeeAmount,
+      interest_amount: interestAmount,
+      days_overdue: daysOverdue,
+      amount_charged: amountCharged,
+      calculated_at: new Date().toISOString(),
+    };
+
     // Check if already has valid PIX data (not expired)
     const now = new Date();
     const pixExpiresAt = invoice.pix_expires_at ? new Date(invoice.pix_expires_at) : null;
+    const storedBreakdown = parseStoredBreakdown(invoice.provider_ref);
     
     if (invoice.pix_copiaecola && invoice.pix_qr_base64 && pixExpiresAt && pixExpiresAt > now) {
       console.log("Returning existing PIX data");
+      const existingAmount = storedBreakdown?.amount_charged ?? Number(invoice.amount);
       return new Response(
         JSON.stringify({
           pix_copiaecola: invoice.pix_copiaecola,
           pix_qr_base64: invoice.pix_qr_base64,
           pix_expires_at: invoice.pix_expires_at,
           checkout_url: invoice.checkout_url,
+          amount_charged: existingAmount,
+          late_fee_amount: storedBreakdown?.late_fee_amount ?? 0,
+          interest_amount: storedBreakdown?.interest_amount ?? 0,
+          days_overdue: storedBreakdown?.days_overdue ?? 0,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -92,8 +172,10 @@ serve(async (req) => {
 
     // Create payment with PIX
     const paymentData = {
-      transaction_amount: Number(invoice.amount),
-      description: `Mensalidade - ${invoice.academy?.name || "Academia"} - ${invoice.due_date}`,
+      transaction_amount: chargeBreakdown.amount_charged,
+      description: `Mensalidade - ${invoice.academy?.name || "Academia"} - ${invoice.due_date}${
+        chargeBreakdown.days_overdue > 0 ? ` (atraso ${chargeBreakdown.days_overdue}d)` : ""
+      }`,
       payment_method_id: "pix",
       payer: {
         email: invoice.student?.email || "aluno@academia.com",
@@ -149,7 +231,7 @@ serve(async (req) => {
             description: `Fatura ${invoice_id.slice(0, 8)} - Vencimento: ${invoice.due_date}`,
             quantity: 1,
             currency_id: "BRL",
-            unit_price: Number(invoice.amount),
+            unit_price: chargeBreakdown.amount_charged,
           },
         ],
         payer: {
@@ -200,6 +282,7 @@ serve(async (req) => {
         checkout_url: checkoutUrl,
         external_reference: invoice_id,
         provider: "mercadopago",
+        provider_ref: JSON.stringify(chargeBreakdown),
         provider_payment_id: String(mpPayment.id),
         provider_status: mpPayment.status || "pending",
       })
@@ -215,6 +298,10 @@ serve(async (req) => {
         pix_qr_base64: pixQrBase64,
         pix_expires_at: pixExpirationDate,
         checkout_url: checkoutUrl,
+        amount_charged: chargeBreakdown.amount_charged,
+        late_fee_amount: chargeBreakdown.late_fee_amount,
+        interest_amount: chargeBreakdown.interest_amount,
+        days_overdue: chargeBreakdown.days_overdue,
         payment_id: mpPayment.id,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

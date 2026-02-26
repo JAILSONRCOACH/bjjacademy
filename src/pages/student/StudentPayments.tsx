@@ -9,6 +9,28 @@ import { ptBR } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
+function getChargeBreakdown(raw: string | null) {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (
+      typeof parsed?.amount_charged === 'number' &&
+      typeof parsed?.base_amount === 'number'
+    ) {
+      return parsed as {
+        amount_charged: number;
+        base_amount: number;
+        late_fee_amount: number;
+        interest_amount: number;
+        days_overdue: number;
+      };
+    }
+  } catch (_e) {
+    return null;
+  }
+  return null;
+}
+
 const statusLabels: Record<string, string> = {
   open: 'Em Aberto',
   paid: 'Pago',
@@ -37,11 +59,14 @@ export default function StudentPayments() {
 
   const handleGenerateCharge = async (invoiceId: string) => {
     try {
-      await createPaymentLink.mutateAsync(invoiceId);
+      const result = await createPaymentLink.mutateAsync(invoiceId);
       refetch();
+      const charged = result.amount_charged;
       toast({
         title: 'Cobrança gerada!',
-        description: 'O PIX está pronto para pagamento.',
+        description: charged
+          ? `O PIX está pronto para pagamento: ${formatCurrency(charged)}.`
+          : 'O PIX está pronto para pagamento.',
       });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Erro ao gerar cobrança';
@@ -154,6 +179,13 @@ export default function StudentPayments() {
               {openInvoices.map((invoice) => (
                 <Card key={invoice.id} className={invoice.status === 'overdue' ? 'border-destructive' : ''}>
                   <CardContent className="p-6">
+                    {(() => {
+                      const breakdown = getChargeBreakdown(invoice.provider_ref);
+                      const displayAmount = breakdown?.amount_charged ?? invoice.amount;
+                      const hasSurcharge = displayAmount > invoice.amount;
+
+                      return (
+                        <>
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <p className="text-sm text-muted-foreground">Vencimento</p>
@@ -162,7 +194,12 @@ export default function StudentPayments() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold">{formatCurrency(invoice.amount)}</p>
+                        <p className="text-2xl font-bold">{formatCurrency(displayAmount)}</p>
+                        {hasSurcharge && (
+                          <p className="text-xs text-muted-foreground">
+                            Inclui multa/juros por atraso
+                          </p>
+                        )}
                         <Badge variant={statusVariants[invoice.status]}>
                           {statusLabels[invoice.status]}
                         </Badge>
@@ -231,6 +268,9 @@ export default function StudentPayments() {
                         {isPixExpired(invoice) ? 'Gerar Novo PIX' : 'Gerar PIX para Pagamento'}
                       </Button>
                     )}
+                        </>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               ))}

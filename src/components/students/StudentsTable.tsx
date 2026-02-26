@@ -101,22 +101,55 @@ export function StudentsTable({ students, beltRules, loading, showActions = fals
         description: 'Por favor aguarde.',
       });
 
-      const { data, error } = await supabase.functions.invoke('resend-credentials', {
-        body: {
-          student_id: student.profile_id || student.id,
-          login_url: window.location.origin + '/login'
+      // Validate session first. If token is stale, try a refresh and fail fast when invalid.
+      const { data: currentUser, error: currentUserError } = await supabase.auth.getUser();
+      if (currentUserError || !currentUser?.user) {
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshed?.session?.access_token) {
+          throw new Error('Sessão expirada. Faça login novamente e tente de novo.');
         }
+      }
+
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        throw new Error('Sessão expirada. Faça login novamente e tente de novo.');
+      }
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/resend-credentials`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: anonKey,
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          student_id: student.profile_id || student.id,
+          login_url: window.location.origin + '/login',
+        }),
       });
 
-      if (error) throw error;
+      const responseBody = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(responseBody?.error || `Erro ${response.status} ao reenviar credenciais`);
+      }
 
+      const data = responseBody;
       if (!data.ok) throw new Error(data.error || 'Erro desconhecido');
+
+      const targetEmail = student.email || '(sem email cadastrado)';
+      const emailError = data.email_error ? ` Motivo: ${data.email_error}` : '';
 
       toast({
         title: 'Credenciais enviadas!',
         description: data.email_sent
-          ? `Email enviado para ${student.email}. SENHA: ${data.debug_password}`
-          : `AVISO: Email não enviado. SENHA: ${data.debug_password}`,
+          ? `Email enviado para ${targetEmail}. SENHA: ${data.debug_password}`
+          : `AVISO: Email não enviado para ${targetEmail}. SENHA: ${data.debug_password}.${emailError}`,
         variant: data.email_sent ? 'default' : 'destructive',
         duration: 10000,
       });

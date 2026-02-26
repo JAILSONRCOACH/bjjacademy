@@ -24,6 +24,24 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
+const DEFAULT_BANK_INFO = {
+  holder_name: '',
+  holder_document: '',
+  bank_code: '',
+  type: 'checking',
+  branch: '',
+  branch_digit: '',
+  account: '',
+  account_digit: '',
+  settlement_speed: 'next_business_day',
+  automatic_anticipation: false,
+  anticipation_fee_percent: '0',
+  monthly_interest_percent: '2',
+  late_fee_percent: '2',
+  settlement_day: '5',
+  payout_notes: '',
+};
+
 export default function AdminAcademy() {
   const { toast } = useToast();
   const { data: academy, isLoading } = useAcademy();
@@ -54,22 +72,14 @@ export default function AdminAcademy() {
     neighborhood: '',
     city: '',
     state: '',
-    bank_info: {
-      holder_name: '',
-      holder_document: '',
-      bank_code: '',
-      type: 'checking',
-      branch: '',
-      branch_digit: '',
-      account: '',
-      account_digit: ''
-    }
+    bank_info: { ...DEFAULT_BANK_INFO }
   });
 
   // Initialize form
   useEffect(() => {
     if (academy && !isEditing) {
       const addr = (academy as any).address_json || {};
+      const bank = (academy as any).bank_info || {};
 
       setFormData({
         name: academy.name || '',
@@ -92,7 +102,13 @@ export default function AdminAcademy() {
         city: addr.city || '',
         state: addr.state || '',
 
-        bank_info: (academy as any).bank_info || {}
+        bank_info: {
+          ...DEFAULT_BANK_INFO,
+          ...bank,
+          type: bank.type === 'savings' ? 'savings' : 'checking',
+          automatic_anticipation:
+            bank.automatic_anticipation ?? DEFAULT_BANK_INFO.automatic_anticipation,
+        }
       });
     }
   }, [academy, isEditing]);
@@ -375,6 +391,32 @@ export default function AdminAcademy() {
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">Conta</p>
                     <p>{(academy as any).bank_info?.account || '—'} - {(academy as any).bank_info?.account_digit}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Repasse</p>
+                    <p>
+                      {(academy as any).bank_info?.settlement_speed === 'same_day' && 'Mesmo dia'}
+                      {(academy as any).bank_info?.settlement_speed === 'next_business_day' && 'Próximo dia útil'}
+                      {(academy as any).bank_info?.settlement_speed === 'weekly' && 'Semanal'}
+                      {(academy as any).bank_info?.settlement_speed === 'monthly' && 'Mensal'}
+                      {!(academy as any).bank_info?.settlement_speed && 'Próximo dia útil'}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Antecipação automática</p>
+                    <p>{(academy as any).bank_info?.automatic_anticipation ? 'Ativa' : 'Inativa'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Taxa de antecipação</p>
+                    <p>{(academy as any).bank_info?.anticipation_fee_percent || '0'}%</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Juros de atraso (mês)</p>
+                    <p>{(academy as any).bank_info?.monthly_interest_percent || '2'}%</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Multa de atraso</p>
+                    <p>{(academy as any).bank_info?.late_fee_percent || '2'}%</p>
                   </div>
                 </div>
               </CardContent>
@@ -742,6 +784,118 @@ export default function AdminAcademy() {
                           placeholder="Ex: 6"
                         />
                       </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4 rounded-md border bg-muted/20 p-4">
+                    <div>
+                      <h4 className="font-medium">Preferências de Recebimento</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Configure como a academia quer receber mensalidades dos alunos.
+                        Repasse no mesmo dia normalmente envolve taxa de antecipação.
+                      </p>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="settlement_speed">Repasse</Label>
+                        <select
+                          id="settlement_speed"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          value={formData.bank_info?.settlement_speed || 'next_business_day'}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            bank_info: { ...prev.bank_info, settlement_speed: e.target.value }
+                          }))}
+                        >
+                          <option value="same_day">Mesmo dia (com custo)</option>
+                          <option value="next_business_day">Próximo dia útil</option>
+                          <option value="weekly">Semanal</option>
+                          <option value="monthly">Mensal</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="anticipation_fee_percent">Taxa de Antecipação (%)</Label>
+                        <Input
+                          id="anticipation_fee_percent"
+                          value={formData.bank_info?.anticipation_fee_percent || '0'}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            bank_info: { ...prev.bank_info, anticipation_fee_percent: e.target.value }
+                          }))}
+                          placeholder="Ex: 1.99"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="monthly_interest_percent">Juros por atraso (% ao mês)</Label>
+                        <Input
+                          id="monthly_interest_percent"
+                          value={formData.bank_info?.monthly_interest_percent || '2'}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            bank_info: { ...prev.bank_info, monthly_interest_percent: e.target.value }
+                          }))}
+                          placeholder="Ex: 2.0"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="late_fee_percent">Multa por atraso (%)</Label>
+                        <Input
+                          id="late_fee_percent"
+                          value={formData.bank_info?.late_fee_percent || '2'}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            bank_info: { ...prev.bank_info, late_fee_percent: e.target.value }
+                          }))}
+                          placeholder="Ex: 2.0"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <Label className="flex items-center gap-2 cursor-pointer mt-2">
+                        <input
+                          type="checkbox"
+                          checked={!!formData.bank_info?.automatic_anticipation}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            bank_info: { ...prev.bank_info, automatic_anticipation: e.target.checked }
+                          }))}
+                          className="h-4 w-4"
+                        />
+                        Ativar antecipação automática
+                      </Label>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="settlement_day">Dia do repasse mensal (1-28)</Label>
+                        <Input
+                          id="settlement_day"
+                          value={formData.bank_info?.settlement_day || '5'}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            bank_info: { ...prev.bank_info, settlement_day: e.target.value }
+                          }))}
+                          placeholder="Ex: 5"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="payout_notes">Observações Financeiras</Label>
+                      <Input
+                        id="payout_notes"
+                        value={formData.bank_info?.payout_notes || ''}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          bank_info: { ...prev.bank_info, payout_notes: e.target.value }
+                        }))}
+                        placeholder="Ex: Priorizar repasse em dias úteis"
+                      />
                     </div>
                   </div>
                 </TabsContent>

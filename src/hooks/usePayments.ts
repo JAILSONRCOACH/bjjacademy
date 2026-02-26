@@ -13,6 +13,7 @@ export interface Invoice {
   paid_at: string | null;
   payment_method: string | null;
   notes: string | null;
+  provider_ref: string | null;
   provider: string | null;
   external_reference: string | null;
   provider_payment_id: string | null;
@@ -110,6 +111,10 @@ export function useCreatePaymentLink() {
         pix_qr_base64: string | null;
         pix_expires_at: string | null;
         checkout_url: string | null;
+        amount_charged?: number;
+        late_fee_amount?: number;
+        interest_amount?: number;
+        days_overdue?: number;
         payment_id?: string;
       };
     },

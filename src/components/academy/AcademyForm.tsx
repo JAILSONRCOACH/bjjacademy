@@ -37,6 +37,13 @@ interface BankInfo {
   branch_digit?: string;
   account?: string;
   account_digit?: string;
+  settlement_speed?: "same_day" | "next_business_day" | "weekly" | "monthly";
+  automatic_anticipation?: boolean;
+  anticipation_fee_percent?: string;
+  monthly_interest_percent?: string;
+  late_fee_percent?: string;
+  settlement_day?: string;
+  payout_notes?: string;
 }
 
 interface AcademyExtended {
@@ -52,6 +59,24 @@ interface AcademyExtended {
   address_json?: AddressJson | null;
   bank_info?: BankInfo | null;
 }
+
+const DEFAULT_BANK_INFO: Required<BankInfo> = {
+  holder_name: "",
+  holder_document: "",
+  bank_code: "",
+  type: "checking",
+  branch: "",
+  branch_digit: "",
+  account: "",
+  account_digit: "",
+  settlement_speed: "next_business_day",
+  automatic_anticipation: false,
+  anticipation_fee_percent: "0",
+  monthly_interest_percent: "2",
+  late_fee_percent: "2",
+  settlement_day: "5",
+  payout_notes: "",
+};
 
 export const AcademyForm = forwardRef<
   AcademyFormRef,
@@ -83,16 +108,7 @@ export const AcademyForm = forwardRef<
     neighborhood: "",
     city: "",
     state: "",
-    bank_info: {
-      holder_name: "",
-      holder_document: "",
-      bank_code: "",
-      type: "checking",
-      branch: "",
-      branch_digit: "",
-      account: "",
-      account_digit: "",
-    },
+    bank_info: { ...DEFAULT_BANK_INFO },
   });
 
   useEffect(() => {
@@ -120,14 +136,31 @@ export const AcademyForm = forwardRef<
         city: addr.city || "",
         state: addr.state || "",
         bank_info: {
-          holder_name: bank.holder_name || "",
-          holder_document: bank.holder_document || "",
-          bank_code: bank.bank_code || "",
+          ...DEFAULT_BANK_INFO,
+          holder_name: bank.holder_name || DEFAULT_BANK_INFO.holder_name,
+          holder_document:
+            bank.holder_document || DEFAULT_BANK_INFO.holder_document,
+          bank_code: bank.bank_code || DEFAULT_BANK_INFO.bank_code,
           type: bank.type === "savings" ? "savings" : "checking",
-          branch: bank.branch || "",
-          branch_digit: bank.branch_digit || "",
-          account: bank.account || "",
-          account_digit: bank.account_digit || "",
+          branch: bank.branch || DEFAULT_BANK_INFO.branch,
+          branch_digit: bank.branch_digit || DEFAULT_BANK_INFO.branch_digit,
+          account: bank.account || DEFAULT_BANK_INFO.account,
+          account_digit: bank.account_digit || DEFAULT_BANK_INFO.account_digit,
+          settlement_speed:
+            bank.settlement_speed || DEFAULT_BANK_INFO.settlement_speed,
+          automatic_anticipation:
+            bank.automatic_anticipation ??
+            DEFAULT_BANK_INFO.automatic_anticipation,
+          anticipation_fee_percent:
+            bank.anticipation_fee_percent ||
+            DEFAULT_BANK_INFO.anticipation_fee_percent,
+          monthly_interest_percent:
+            bank.monthly_interest_percent ||
+            DEFAULT_BANK_INFO.monthly_interest_percent,
+          late_fee_percent:
+            bank.late_fee_percent || DEFAULT_BANK_INFO.late_fee_percent,
+          settlement_day: bank.settlement_day || DEFAULT_BANK_INFO.settlement_day,
+          payout_notes: bank.payout_notes || DEFAULT_BANK_INFO.payout_notes,
         },
       });
     }
@@ -620,6 +653,146 @@ export const AcademyForm = forwardRef<
                     },
                   })
                 }
+              />
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-md border bg-muted/30 p-4">
+            <h4 className="text-sm font-semibold">Configuração de Recebimento</h4>
+            <p className="text-xs text-muted-foreground mt-1">
+              Defina como você quer receber as mensalidades dos alunos. O
+              repasse no mesmo dia normalmente tem custo de antecipação.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="space-y-2">
+                <Label>Preferência de Repasse</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={
+                    formData.bank_info.settlement_speed ||
+                    DEFAULT_BANK_INFO.settlement_speed
+                  }
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      bank_info: {
+                        ...formData.bank_info,
+                        settlement_speed: e.target.value as BankInfo["settlement_speed"],
+                      },
+                    })
+                  }
+                >
+                  <option value="same_day">Mesmo dia (com custo)</option>
+                  <option value="next_business_day">Próximo dia útil</option>
+                  <option value="weekly">Semanal</option>
+                  <option value="monthly">Mensal</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Taxa de Antecipação (%)</Label>
+                <Input
+                  value={formData.bank_info.anticipation_fee_percent || "0"}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      bank_info: {
+                        ...formData.bank_info,
+                        anticipation_fee_percent: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="Ex: 1.99"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Juros por Atraso (% ao mês)</Label>
+                <Input
+                  value={formData.bank_info.monthly_interest_percent || "2"}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      bank_info: {
+                        ...formData.bank_info,
+                        monthly_interest_percent: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="Ex: 2.0"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Multa por Atraso (%)</Label>
+                <Input
+                  value={formData.bank_info.late_fee_percent || "2"}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      bank_info: {
+                        ...formData.bank_info,
+                        late_fee_percent: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="Ex: 2.0"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <Label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!formData.bank_info.automatic_anticipation}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      bank_info: {
+                        ...formData.bank_info,
+                        automatic_anticipation: e.target.checked,
+                      },
+                    })
+                  }
+                  className="h-4 w-4"
+                />
+                Ativar antecipação automática
+              </Label>
+
+              <div className="space-y-2">
+                <Label>Dia do Repasse Mensal (1-28)</Label>
+                <Input
+                  value={formData.bank_info.settlement_day || "5"}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      bank_info: {
+                        ...formData.bank_info,
+                        settlement_day: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="Ex: 5"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2 mt-4">
+              <Label>Observações Financeiras</Label>
+              <Input
+                value={formData.bank_info.payout_notes || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    bank_info: {
+                      ...formData.bank_info,
+                      payout_notes: e.target.value,
+                    },
+                  })
+                }
+                placeholder="Ex: Preferência por repasse em dias úteis"
               />
             </div>
           </div>

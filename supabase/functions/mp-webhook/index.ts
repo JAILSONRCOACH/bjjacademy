@@ -81,6 +81,7 @@ serve(async (req) => {
         .update({
           status: "paid",
           paid_at: new Date().toISOString(),
+          amount: Number(payment.transaction_amount) || undefined,
           provider_payment_id: String(paymentId),
           payment_method: payment.payment_type_id || "mercadopago",
           provider_status: "paid",

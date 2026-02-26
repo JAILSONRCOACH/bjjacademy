@@ -43,18 +43,18 @@ export function ProtectedRoute({ children, allowedRoles, requireSuperAdmin }: Pr
     );
   }
 
-  // SaaS Lock Check
-  // Allow access to billing page even if locked so admin can pay
-  if (!hasAccess && location.pathname !== '/admin/billing') {
-    return <LockScreen />;
-  }
+  const isSuperAdmin = !!profile.is_super_admin;
 
   // Super Admin Check
-  if (requireSuperAdmin) {
-    if (!profile.is_super_admin) {
-      // Redirect to normal dashboard or home
-      return <Navigate to="/" replace />;
-    }
+  if (requireSuperAdmin && !isSuperAdmin) {
+    // Redirect to normal dashboard or home
+    return <Navigate to="/" replace />;
+  }
+
+  // SaaS Lock Check
+  // Allow access to billing page even if locked so admin can pay
+  if (!isSuperAdmin && !hasAccess && location.pathname !== '/admin/billing') {
+    return <LockScreen />;
   }
 
   // Check if user has any of the allowed roles in their roles array
@@ -86,7 +86,7 @@ export function ProtectedRoute({ children, allowedRoles, requireSuperAdmin }: Pr
   // MANDATORY ONBOARDING GUARD (Admin Only)
   // Forces admin to complete academy registration
   // MANDATORY ONBOARDING GUARD (Admin Only)
-  if (activeRole === 'admin' && profile?.academy_id) {
+  if (!isSuperAdmin && activeRole === 'admin' && profile?.academy_id) {
     const isOnboarding = location.pathname.includes('/admin/onboarding');
 
     // If onboarding is NOT completed, redirect to wizard

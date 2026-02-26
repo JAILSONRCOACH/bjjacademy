@@ -140,7 +140,7 @@ export default function OnboardingWizard() {
                         {currentStep === 1 && (
                             <div className="space-y-4 max-w-4xl mx-auto">
                                 <div className="text-sm text-purple-600 bg-purple-50 p-4 rounded-md border border-purple-100 mb-6">
-                                    ℹ️ Preencha os dados da sua academia. <strong>Dados Bancários</strong> são obrigatórios apenas para cobrancas automáticas. Se você recebe por PIX/Dinheiro manualmente, é opcional.
+                                    ℹ️ Preencha os dados da sua academia. <strong>Dados Bancários e preferência de repasse</strong> são usados para automatizar mensalidades dos alunos, sem precisar configurar API manualmente.
                                 </div>
                                 <AcademyForm ref={academyFormRef} onSaveSuccess={() => { }} />
                             </div>

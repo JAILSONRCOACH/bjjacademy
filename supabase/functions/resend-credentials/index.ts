@@ -11,6 +11,16 @@ interface ResendCredentialsRequest {
   login_url?: string;
 }
 
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return "Unknown email error";
+  }
+}
+
 // Generate a secure random password
 function generatePassword(length: number = 10): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'; // Removed symbols to match other functions
@@ -169,7 +179,7 @@ serve(async (req) => {
     }
 
     // Auth check
-    const authHeader = req.headers.get("authorization");
+    const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
     }
@@ -212,6 +222,10 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Student not found" }), { status: 404, headers: corsHeaders });
     }
 
+    if (!studentProfile.email) {
+      return new Response(JSON.stringify({ error: "Student has no email configured" }), { status: 400, headers: corsHeaders });
+    }
+
     // Security check: ensure admin owns this student
     if (studentProfile.academy_id !== callerProfile.academy_id) {
       return new Response(JSON.stringify({ error: "Unauthorized access to student" }), { status: 403, headers: corsHeaders });
@@ -231,6 +245,7 @@ serve(async (req) => {
     // Send Email
     let emailSent = false;
     let emailErrorMsg = null;
+    let emailMessageId = null;
 
     if (RESEND_API_KEY) {
       try {
@@ -251,15 +266,19 @@ serve(async (req) => {
 
         if (resendRes.ok) {
           emailSent = true;
+          const resendBody = await resendRes.json().catch(() => null);
+          emailMessageId = resendBody?.id ?? null;
         } else {
           emailErrorMsg = await resendRes.text();
+          if (!emailErrorMsg) emailErrorMsg = `Resend HTTP ${resendRes.status}`;
           console.error("Resend Error:", emailErrorMsg);
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error("Email Fetch Error:", e);
-        emailErrorMsg = e.message;
+        emailErrorMsg = getErrorMessage(e);
       }
     } else {
+      emailErrorMsg = "RESEND_API_KEY not configured";
       console.log("⚠️ SKIPPING EMAIL: No RESEND_API_KEY configured.");
     }
 
@@ -267,6 +286,8 @@ serve(async (req) => {
       ok: true,
       message: "Credentials reset successfully",
       email_sent: emailSent,
+      email_error: emailErrorMsg,
+      email_message_id: emailMessageId,
       debug_password: newPassword // Remove this in production if needed, but useful for manual sending
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

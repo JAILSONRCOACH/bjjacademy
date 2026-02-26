@@ -38,6 +38,11 @@ export default function Login() {
   };
 
   // Redirect based on active role once profile is loaded
+  if (profile?.is_super_admin) {
+    navigate('/saas/dashboard', { replace: true });
+    return null;
+  }
+
   if (profile && activeRole) {
     const redirectPath =
       activeRole === 'admin' ? '/admin/dashboard' :
